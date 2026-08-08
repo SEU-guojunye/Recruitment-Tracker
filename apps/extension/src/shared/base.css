@@ -28,6 +28,11 @@ textarea {
   padding: 24px;
 }
 
+.entry-shell--popup {
+  width: 360px;
+  min-height: 260px;
+}
+
 .entry-kicker {
   margin: 0 0 8px;
   color: #2563eb;

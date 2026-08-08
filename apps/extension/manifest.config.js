@@ -8,7 +8,8 @@ export default defineManifest({
     permissions: [
         'storage',
         'activeTab',
-        'scripting'
+        'scripting',
+        'alarms'
     ],
     action: {
         default_popup: 'index.html'
