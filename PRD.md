@@ -698,11 +698,11 @@ user_snapshots/{cloudbaseUserId}
 数据规则：
 
 - 每个 CloudBase 用户 ID 只能存在一份最新快照。
-- 集合禁止匿名访问，登录用户只能创建、读取、更新或删除 `ownerId` 属于自己的文档。
-- 创建规则必须校验待写入数据中的 `ownerId`，更新和删除规则必须校验已有文档所有者；不能在创建规则中依赖尚不存在的 `doc.*`。
-- 创建时必须同时满足文档 `_id` 和新数据 `ownerId` 均等于当前 `auth.uid`；更新时还必须禁止修改 `_id`、`ownerId` 和平台管理的 `_openid`。具体规则表达式在 CloudBase PoC 中按当前规则语法验证。
-- `_id` 固定使用当前用户 ID；写入采用同一文档的幂等覆盖，不使用随机文档 ID。
-- 数据隔离使用 CloudBase 数据库安全规则，不只依赖 React 界面的“只读模式”。
+- 集合禁止匿名访问，Web 客户端只能读取 `_id` 和 `ownerId` 都属于当前 `auth.uid` 的文档；客户端直接创建、更新和删除快照均关闭。
+- 所有快照写入统一调用已认证的 `recruitmentSnapshot` Event Function。函数只使用平台注入的真实 `uid`，忽略客户端传入的 owner 字段，并在服务端固定 `_id`、`ownerId` 和 `updatedAt`。
+- Event Function 通过服务端 SDK 写数据库时会绕过客户端安全规则，因此函数必须自行校验登录身份、8 MiB 容量、数据结构和账号边界；跨账号 owner 请求必须在写入前拒绝。
+- `_id` 固定使用当前用户 ID；服务端写入采用同一文档的幂等覆盖，不使用随机文档 ID。
+- 数据隔离由数据库只读规则和 Event Function 服务端鉴权共同保证，不依赖 React 界面的“只读模式”。
 - 前端只包含 CloudBase 环境 ID、客户端可公开配置和 Publishable Key。
 - 前端不得包含 SecretId、SecretKey、管理员凭证或服务端 API Key。
 - 手机只读是产品交互限制；账号数据隔离由 CloudBase 身份认证和数据库安全规则保证。
@@ -753,12 +753,13 @@ user_snapshots/{cloudbaseUserId}
 | 构建工具 | Vite + npm |
 | 扩展规范 | Manifest V3 |
 | 扩展本地存储 | `chrome.storage.local` |
-| 扩展权限 | `storage`、`activeTab`、`scripting`、`alarms`；CloudBase 使用最小化 `host_permissions` |
+| 扩展权限 | `storage`、`activeTab`、`scripting`、`alarms`、`offscreen`；仅为托管桥接页配置最小化 `host_permissions` |
 | 解析 | `ParserOrchestrator` + `SiteAdapter` + 通用回退解析器 |
-| 云端 SDK | `@cloudbase/js-sdk`，由 Vite 打包到扩展和 Web 产物 |
+| 云端 SDK | `@cloudbase/js-sdk` 仅打包到托管 Web / 手机 Web 产物；扩展通过本地 offscreen 中继访问隔离的托管桥接页 |
 | 身份认证 | 腾讯云 CloudBase 身份认证，MVP 使用预创建个人账号的用户名密码登录 |
 | 云端数据库 | CloudBase 文档型数据库 `user_snapshots` 集合 |
-| 数据权限 | CloudBase 数据库安全规则，仅所有者本人可读写 |
+| 云端写入 | `recruitmentSnapshot` Event Function，使用平台真实 `uid` 幂等覆盖唯一快照 |
+| 数据权限 | CloudBase 数据库规则仅允许所有者读取；写入由 Event Function 服务端鉴权 |
 | Web 部署 | CloudBase 静态网站托管 |
 | 单元与组件测试 | Vitest + React Testing Library |
 | 端到端与响应式测试 | Playwright |
@@ -848,21 +849,23 @@ AuthService
 - `CompanyService` 创建和更新 `CompanyRecord`。
 - `ApplicationService` 响应用户的投递新增、编辑、删除和进度更新。
 - `CsvImportExportService` 负责 CSV 序列化、解析、格式校验、ID 匹配和导入预览，并在全部校验通过后调用本地 Repository 原子提交结果。
-- `SnapshotService` 从本地 Repository 生成完整快照并上传 CloudBase。
+- `SnapshotService` 从本地 Repository 生成完整快照，通过托管桥接页调用 `recruitmentSnapshot` Event Function 上传 CloudBase。
 - `SyncCoordinator` 负责持久化 dirty 修订号、延迟调度、单任务串行、失败重试和设备冲突检查。
 - `StatisticsService` 只根据稳定阶段、终态标记和明确日期字段计算统计与聚合。
 - React 组件不直接调用 `chrome.storage` 或 CloudBase SDK。
-- 扩展同步服务注入 `CloudBaseSnapshotWriter`，手机 Web 只注入 `CloudBaseSnapshotReader`；只读 Web 产物不得引用上传方法。
+- 扩展同步服务注入由托管桥接页和 Event Function 实现的 `CloudBaseSnapshotWriter`，手机 Web 只注入 `CloudBaseSnapshotReader`；手机只读入口的组件树不得引用上传方法。
 
 ### 11.5 扩展打包和安全来源约束
 
-- React、React DOM 和 `@cloudbase/js-sdk` 必须由 Vite 打包进入扩展产物。
+- React 和 React DOM 由 Vite 打包进入扩展产物；`@cloudbase/js-sdk` 只进入托管 Web 产物，不进入扩展执行上下文。
 - Manifest V3 扩展不得从 CDN 加载或执行远程 JavaScript。
-- CloudBase API 地址加入最小化的 `host_permissions`。
+- 扩展只在本地打包的 offscreen document 中嵌入固定 HTTPS 托管桥接页；该 iframe 是隔离的 Web 来源，通过固定消息协议通信，不在扩展上下文执行远程脚本。
+- Manifest 只为托管桥接页域名配置最小化 `host_permissions` 和 `frame-src`，不得加入 CloudBase API 通配域名。
 - 启动时将 `chrome.storage.local` 的访问级别限制为扩展受信上下文，Content Script 不直接访问完整业务数据。
 - 生产包不包含 SecretId、SecretKey、管理员凭证、服务端 API Key 或未使用的权限。
-- 开发开始前必须完成 Chrome 扩展安全来源 PoC，验证用户名密码登录、真实 Session、令牌持久化、首次创建快照、覆盖快照和读取同步状态；还必须验证 Dashboard 关闭后，Manifest V3 Service Worker 能重新恢复 Session 并完成一次待处理上传。
-- 如果 CloudBase 安全来源不接受 `chrome-extension://`，则通过 CloudBase HTTP 网关/云函数承接同步请求，并使用托管 Web 登录页完成授权回调。
+- Chrome 扩展安全来源 PoC 已确认 CloudBase 会拒绝 `chrome-extension://` 来源，且扩展 ID 不能登记为安全域名；生产方案固定为“Service Worker + offscreen document + 托管 Web 桥接页 + Event Function”，不再保留扩展直连 SDK 分支。
+- 托管桥接页负责用户名密码登录、真实 `getSession()`、令牌持久化和函数调用；Service Worker 负责 dirty 状态、`chrome.alarms` 和消息调度。Dashboard 关闭后仍必须能重建 offscreen document、恢复托管来源 Session 并上传待处理快照。
+- 桥接协议必须校验 iframe 来源、扩展父来源、消息 channel、请求 ID 和超时；用户名、密码和令牌不得写入业务 Repository 或跨消息返回给扩展。
 - 手机 Web 域名必须加入 CloudBase 安全来源白名单。
 - 生产自定义域名按要求完成 HTTPS 和 ICP 备案。
 
@@ -891,8 +894,8 @@ Recruitment-Tracker/
 
 - 当前环境必须保持 NoSQL 文档数据库模式，不切换到 PG。
 - 用户名密码登录方法和 Publishable Key 必须可用；MVP 不依赖当前未启用的邮箱 Provider。
-- `user_snapshots` 集合安全规则必须修正为区分创建与已有文档更新，并通过两个仅用于开发验收的管理端测试账号完成越权验证；这不代表产品支持多账号使用。
-- 本地 Vite 实际端口、手机 Web 域名和扩展来源必须分别完成安全来源验证，不能因已有其他 localhost 端口而假定当前开发地址可用。
+- `user_snapshots` 集合安全规则必须只允许已登录所有者读取，并关闭客户端直接写入；通过两个仅用于开发验收的管理端测试账号验证读取规则与 Event Function 账号边界，这不代表产品支持多账号使用。
+- 本地 Vite 实际端口和生产 Web 域名必须分别加入安全来源并验证；扩展来源不直接访问 CloudBase，只允许嵌入固定桥接页来源。
 - 首次 Web 发布使用 CloudBase 应用部署能力创建独立应用和域名；后续更新保持同一部署方式。
 
 ## 12. 数据同步流程
@@ -906,7 +909,8 @@ Recruitment-Tracker/
   → ChromeLocalRepository 原子保存并增加 localRevision
   → Dashboard 立即更新
   → 持久化 dirty 状态并通过 Extension Service Worker / chrome.alarms 调度
-  → SnapshotService 延迟合并并上传 CloudBase 完整快照
+  → SnapshotService 延迟合并并经托管桥接页调用 Event Function
+  → Event Function 读取平台 uid、校验并幂等覆盖 CloudBase 完整快照
 ```
 
 ### 12.2 手机端查看
@@ -1014,11 +1018,11 @@ Recruitment-Tracker/
 - Dashboard 在延迟同步前关闭后，Extension Service Worker 仍能恢复真实 Session，并根据持久化 dirty 修订号完成任务。
 - 上传期间再次修改数据时，旧修订成功不得错误清除新修订的 dirty 状态。
 - 登录账号与 `boundUserId` 不一致时同步被阻止；不同 `sourceDeviceId` 不会被自动覆盖，只有明确确认本机接管后才更新唯一编辑设备。
-- 首次创建、后续覆盖和读取快照均成功，且 `_id` 始终为当前用户 ID，不产生重复快照。
-- CloudBase 安全规则验证确认用户不能读取或修改其他账号快照。
-- CloudBase 安全规则验证确认未登录和匿名会话不能访问快照，创建规则不依赖不存在的 `doc.*`。
+- Event Function 首次创建、后续覆盖以及 Web 读取快照均成功，且 `_id` 始终为平台当前用户 ID，不产生重复快照。
+- CloudBase 安全规则验证确认未登录、匿名和其他账号不能读取快照，且所有客户端直接创建、更新和删除请求均被拒绝。
+- Event Function 验证确认未登录调用和跨账号 owner 请求在写入前被拒绝，客户端传入的 owner 字段不能改变落库所有者。
 - 页面和扩展中均不包含 SecretId、SecretKey、管理员凭证或服务端 API Key。
-- Chrome 扩展安全来源 PoC 通过；若采用 HTTP 网关方案，鉴权和跨域测试通过。
+- Chrome 扩展直连来源拒绝已被 PoC 复现；托管桥接 + Event Function 后备链路的鉴权、来源校验和跨账号拒绝全部通过。
 - 手机 Web 产物只包含 `CloudBaseSnapshotReader`，不引用或实例化快照上传能力。
 
 ### 13.7 手机只读 Dashboard
@@ -1056,7 +1060,7 @@ Recruitment-Tracker/
 | 同一浏览器切换账号 | 将原账号本地数据上传到新账号 | 使用 `boundUserId` 绑定，账号不一致时阻止同步并要求显式导出、清空和重新绑定 |
 | 第二台电脑覆盖快照 | 手机看到另一台电脑的旧数据 | MVP 单编辑设备，使用 `sourceDeviceId` 和 `sourceRevision` 检测并阻止静默覆盖 |
 | 前端泄露高权限密钥 | 云端数据被越权访问 | 只打包客户端可公开配置，禁止打包 SecretId、SecretKey 和服务端 API Key |
-| 扩展来源无法直连 CloudBase | 电脑端无法登录或同步 | 开发前完成 PoC；必要时改用 HTTP 网关/云函数和托管登录回调 |
+| 扩展来源无法直连 CloudBase | 电脑端无法登录或同步 | 已采用固定托管桥接页和最小 Event Function；扩展不直连 CloudBase API |
 | Service Worker 被回收 | 页面关闭后延迟同步任务丢失 | 持久化 dirty 修订号并使用 `chrome.alarms` 恢复任务，不依赖内存计时器 |
 | 本地或单快照容量超限 | 本地写入或云端覆盖失败 | MVP 统一限制序列化数据不超过 8 MiB，写入和 CSV 导入前预检 |
 | 页面采集内容包含恶意文本或 URL | XSS、公式注入或危险跳转 | 内容按纯文本处理、限制长度、URL 协议白名单、CSV 可逆公式防护 |
@@ -1080,7 +1084,7 @@ Recruitment-Tracker/
 - 多份历史云端快照和版本恢复。
 - PWA 安装和离线编辑。
 - 原生 Android / iOS App。
-- 通用 Node.js / Express 业务后端；如果扩展安全来源 PoC 失败，允许增加只承接认证或快照同步的最小 CloudBase 网关/云函数。
+- 通用 Node.js / Express 业务后端；仅保留已由 PoC 证明必要的最小 `recruitmentSnapshot` Event Function。
 - CloudBase PG 模式和关系型业务表。
 - 服务端渲染和 SEO。
 - Redux、React Router 和大型 UI 组件库。
@@ -1088,7 +1092,7 @@ Recruitment-Tracker/
 ## 16. 实施顺序
 
 1. 完善现有 npm workspaces、ESLint、Vitest、React Testing Library 和 Playwright，拆分 Popup、扩展 Dashboard 与 Web 三个入口，保证 lint、test 和 build 基线可执行。
-2. 在现有 CloudBase 测试环境完成阻塞性 PoC：用户名密码登录、`getSession()`、扩展令牌持久化、首次创建与覆盖快照、跨账号拒绝、安全来源和最小 `host_permissions`；同时修正 `user_snapshots` 创建/更新安全规则。
+2. 在现有 CloudBase 测试环境完成阻塞性 PoC：验证扩展直连来源拒绝，落地托管桥接页与 `recruitmentSnapshot` Event Function；完成用户名密码登录、`getSession()`、令牌持久化、首次创建与覆盖快照、跨账号拒绝、页面关闭后上传、只读安全规则和最小 `host_permissions`。
 3. 在 `packages/core` 实现版本化模型、六环节默认流程、稳定阶段与终态、字段校验、公司名称规范化、统计公式、筛选和确定性聚合，并完成纯函数单元测试。
 4. 实现本地存储信封、`ChromeLocalRepository`、公司和投递 Service、级联删除、账号/设备绑定、8 MiB 容量预检及原子批量写入测试。
 5. 从原型提取设计变量和响应式 CSS，在 `packages/ui` 先实现只读共享组件、页面状态和可访问性；使用固定数据验证桌面横向时间线和手机纵向时间线。

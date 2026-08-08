@@ -9,10 +9,27 @@ export default defineManifest({
         'storage',
         'activeTab',
         'scripting',
-        'alarms'
+        'alarms',
+        'offscreen'
     ],
+    host_permissions: [
+        'http://localhost:5173/*'
+    ],
+    background: {
+        service_worker: 'src/background/service-worker.js',
+        type: 'module'
+    },
     action: {
         default_popup: 'index.html'
     },
-    options_page: 'dashboard.html'
+    options_page: 'dashboard.html',
+    web_accessible_resources: [
+        {
+            resources: ['offscreen.html'],
+            matches: ['<all_urls>']
+        }
+    ],
+    content_security_policy: {
+        extension_pages: "script-src 'self'; object-src 'self'; frame-src http://localhost:5173"
+    }
 })
