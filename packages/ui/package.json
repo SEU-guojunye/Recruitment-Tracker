@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "exports": "./src/index.js",
+  "dependencies": {
+    "@recruitment-tracker/core": "*"
+  },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
