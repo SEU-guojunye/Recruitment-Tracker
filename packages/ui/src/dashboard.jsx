@@ -28,6 +28,17 @@ function formatTimestamp(value) {
   }).format(date)
 }
 
+function formatDateOnly(value) {
+  if (!value) return '暂无'
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return '暂无'
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('.')
+}
+
 function linkLabel(value) {
   if (!value) return '未填写链接'
   try {
@@ -87,10 +98,10 @@ export function ProgressTimeline({ application }) {
             <li className={`rt-timeline__step is-${stage.state}`} key={stage.id}>
               <span className="rt-timeline__name">{stage.name}</span>
               <span className="rt-timeline__marker" aria-hidden="true" />
-              <span className="rt-timeline__date">
-                {formatDate(stage.date)}
+              <span className="rt-timeline__meta">
+                <span className="rt-timeline__date">{formatDate(stage.date)}</span>
+                <span className="rt-timeline__state">{stateLabel}</span>
               </span>
-              <span className="rt-timeline__state">{stateLabel}</span>
             </li>
           )
         })}
@@ -104,6 +115,50 @@ export function ProgressTimeline({ application }) {
   )
 }
 
+function StatIcon({ name }) {
+  const paths = {
+    company: (
+      <>
+        <path d="M4 20h16" />
+        <path d="M6 20V6.5L12 4l6 2.5V20" />
+        <path d="M9 9h1M14 9h1M9 13h1M14 13h1M11 20v-3h2v3" />
+      </>
+    ),
+    applications: (
+      <>
+        <rect x="4" y="7" width="16" height="12" rx="2" />
+        <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
+        <path d="M4 12h16M10 12v2h4v-2" />
+      </>
+    ),
+    active: (
+      <>
+        <path d="M4 15h3l2-7 3 10 2-6 2 3h4" />
+        <path d="M4 20h16" />
+      </>
+    ),
+    interview: (
+      <>
+        <path d="M5 5.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z" />
+        <path d="M7 10h.01M12 10h.01M17 10h.01" />
+      </>
+    ),
+    recent: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 7v5l3 2" />
+        <path d="M5 4v3h3" />
+        <path d="M5 7a8 8 0 0 1 13.5-2" />
+      </>
+    ),
+  }
+  return (
+    <svg className="rt-stat__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.recent}
+    </svg>
+  )
+}
+
 function StatCards({ items }) {
   return (
     <section className="rt-stats" aria-label="数据概览">
@@ -111,7 +166,7 @@ function StatCards({ items }) {
         <article className="rt-stat" key={item.label}>
           <div className="rt-stat__label">
             <span>{item.label}</span>
-            <span className="rt-stat__icon" aria-hidden="true">{item.icon}</span>
+            <span className="rt-stat__icon"><StatIcon name={item.icon} /></span>
           </div>
           <div className="rt-stat__value">
             {item.value} {item.unit ? <small>{item.unit}</small> : null}
@@ -136,12 +191,15 @@ function PhasePills({ counts }) {
 }
 
 function ApplicationCard({ application, index, mode, renderActions }) {
+  const recordLabel = `投递记录 ${String(index + 1).padStart(2, '0')}`
+  const jobTitle = typeof application.jobTitle === 'string' ? application.jobTitle.trim() : ''
   return (
     <article className="rt-application-card">
       <div className="rt-application-card__top">
         <span className="rt-record-index">{String(index + 1).padStart(2, '0')}</span>
         <div className="rt-application-card__identity">
-          <h4>投递记录 {String(index + 1).padStart(2, '0')}</h4>
+          <h4>{jobTitle || recordLabel}</h4>
+          {jobTitle ? <span className="rt-record-label">{recordLabel}</span> : null}
           <ExternalLink href={application.applicationLink}>
             {linkLabel(application.applicationLink)}
           </ExternalLink>
@@ -272,7 +330,7 @@ function RecruitmentCompanyList({ rows, mode, renderCompanyActions }) {
             <strong>{row.latestApplication?.progressStatus || '暂无'}</strong>
           </div>
           <div className="rt-mobile-field" data-label="最近更新">
-            <span>{formatTimestamp(row.latestUpdatedAt)}</span>
+            <span>{formatDateOnly(row.latestUpdatedAt)}</span>
           </div>
           {mode === 'editable' && renderCompanyActions ? (
             <div className="rt-row-actions">{renderCompanyActions(row.company)}</div>
@@ -334,18 +392,18 @@ function getStats(activeTab, companies, applications) {
   if (activeTab === 'applications') {
     const stats = selectApplicationStats(companies, applications)
     return [
-      { label: '进行中的公司', value: stats.activeCompanyCount, unit: '家公司', note: '至少一条非终态投递', icon: '⌁' },
-      { label: '已投递岗位', value: stats.applicationCount, unit: '条记录', note: '全部已完成投递', icon: '✓' },
-      { label: '面试中', value: stats.interviewApplicationCount, unit: '条记录', note: '当前处于面试阶段', icon: '◇' },
-      { label: '最近更新', value: formatDate(stats.latestProgressUpdatedDate), note: '按进度更新时间', icon: '↻' },
+      { label: '进行中的公司', value: stats.activeCompanyCount, unit: '家公司', note: '至少一条非终态投递', icon: 'active' },
+      { label: '已投递岗位', value: stats.applicationCount, unit: '条记录', note: '全部已完成投递', icon: 'applications' },
+      { label: '面试中', value: stats.interviewApplicationCount, unit: '条记录', note: '当前处于面试阶段', icon: 'interview' },
+      { label: '最近更新', value: formatDate(stats.latestProgressUpdatedDate), note: '按进度更新时间', icon: 'recent' },
     ]
   }
   const stats = selectCompanyStats(companies, applications)
   return [
-    { label: '招聘公司', value: stats.companyCount, unit: '家公司', note: '全部招聘信息', icon: '⌂' },
-    { label: '关联投递', value: stats.applicationCount, unit: '条记录', note: '公司下全部投递', icon: '↗' },
-    { label: '进行中的公司', value: stats.activeCompanyCount, unit: '家公司', note: '至少一条非终态投递', icon: '⌁' },
-    { label: '最近更新', value: formatTimestamp(stats.latestUpdatedAt), note: '公司与投递更新时间', icon: '↻' },
+    { label: '招聘公司', value: stats.companyCount, unit: '家公司', note: '全部招聘信息', icon: 'company' },
+    { label: '关联投递', value: stats.applicationCount, unit: '条记录', note: '公司下全部投递', icon: 'applications' },
+    { label: '进行中的公司', value: stats.activeCompanyCount, unit: '家公司', note: '至少一条非终态投递', icon: 'active' },
+    { label: '最近更新', value: formatDateOnly(stats.latestUpdatedAt), note: '公司与投递更新时间', icon: 'recent' },
   ]
 }
 

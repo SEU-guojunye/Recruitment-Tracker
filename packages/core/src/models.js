@@ -61,6 +61,7 @@ export function createApplication(
   const application = {
     id: input.id || `application-${idFactory()}`,
     companyId: input.companyId,
+    jobTitle: input.jobTitle || '',
     applicationLink: normalizeOptionalUrl(input.applicationLink),
     workLocation: input.workLocation || '',
     statusLink: normalizeOptionalUrl(input.statusLink),

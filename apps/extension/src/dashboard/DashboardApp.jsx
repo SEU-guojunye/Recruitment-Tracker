@@ -175,6 +175,7 @@ function ApplicationDialog({
   const today = toLocalDate()
   const [values, setValues] = useState(() => ({
     companyId: application?.companyId || initialCompanyId || companies[0]?.id || '',
+    jobTitle: application?.jobTitle || '',
     applicationLink: application?.applicationLink || '',
     workLocation: application?.workLocation || '',
     statusLink: application?.statusLink || '',
@@ -221,9 +222,17 @@ function ApplicationDialog({
       >
         {error ? <p className="rt-form-error" role="alert">{error}</p> : null}
         <div className="rt-form-grid">
+          <FormField label="岗位名称" full>
+            <input
+              data-autofocus
+              maxLength={200}
+              placeholder="例如：前端开发工程师"
+              value={values.jobTitle}
+              onChange={(event) => update('jobTitle', event.target.value)}
+            />
+          </FormField>
           <FormField label="投递公司" full>
             <select
-              data-autofocus
               required
               value={values.companyId}
               onChange={(event) => update('companyId', event.target.value)}

@@ -159,6 +159,9 @@ export function validateApplication(application, { companyIds, today = toLocalDa
   if (companyIds && !companyIds.has(application.companyId)) {
     addError(errors, 'companyId', 'company_not_found', '投递关联的公司不存在')
   }
+  validateText(errors, application.jobTitle ?? '', 'jobTitle', {
+    max: FIELD_LIMITS.jobTitle,
+  })
   validateUrl(errors, application.applicationLink, 'applicationLink')
   validateUrl(errors, application.statusLink, 'statusLink')
   validateText(errors, application.workLocation, 'workLocation', {

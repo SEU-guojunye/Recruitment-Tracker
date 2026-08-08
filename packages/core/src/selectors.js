@@ -101,6 +101,7 @@ function applicationSearchText(company, application) {
     company.companyName,
     company.recruitmentLink,
     company.companyNotes,
+    application.jobTitle,
     application.applicationLink,
     application.statusLink,
     application.workLocation,

@@ -33,7 +33,7 @@ function createRepository(storageArea = new FakeStorageArea()) {
   return new ChromeLocalRepository({
     storageArea,
     idFactory: () => `test-${++next}`,
-    today: '2026-08-08',
+    today: '2026-08-09',
   })
 }
 
@@ -121,6 +121,18 @@ describe('editable extension dashboard', () => {
     await addApplication(user, '上海')
     await addApplication(user, '北京')
 
+    const firstCard = screen.getByText('投递记录 01').closest('.rt-application-card')
+    await user.click(within(firstCard).getByRole('button', { name: '编辑投递' }))
+    const applicationDialog = screen.getByRole('dialog', { name: '编辑投递信息' })
+    const jobTitleInput = within(applicationDialog).getByLabelText('岗位名称')
+    await user.type(jobTitleInput, '前端开发工程师')
+    await user.click(within(applicationDialog).getByRole('button', { name: '保存投递' }))
+    await screen.findByText('投递信息已更新')
+    expect((await repository.getData()).applications).toEqual(expect.arrayContaining([
+      expect.objectContaining({ jobTitle: '前端开发工程师' }),
+    ]))
+    expect(screen.getByText('前端开发工程师')).toBeInTheDocument()
+
     expect(screen.getAllByText(/投递记录 0[12]/u)).toHaveLength(2)
     await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
     const companyRow = screen.getByText('重点关注校招').closest('.rt-recruitment-row')
@@ -136,7 +148,7 @@ describe('editable extension dashboard', () => {
 
     await screen.findByText('公司及 2 条投递已删除')
     expect(await repository.getData()).toEqual({ companies: [], applications: [] })
-    expect((await repository.getEnvelope()).sync.localRevision).toBe(4)
+    expect((await repository.getEnvelope()).sync.localRevision).toBe(5)
   })
 
   it('shows a repository error and does not close the form on failed save', async () => {
@@ -180,7 +192,7 @@ describe('editable extension dashboard', () => {
     const options = {
       idFactory,
       now: new Date('2026-08-08T10:00:00.000Z'),
-      today: '2026-08-08',
+      today: '2026-08-09',
       companyIds: new Set([targetCompany.id]),
     }
     const first = createApplication(
@@ -212,9 +224,9 @@ describe('editable extension dashboard', () => {
       expect(saved).toMatchObject({
         progressStatus: '技术一面',
         progressPhase: 'interview',
-        progressUpdatedDate: '2026-08-08',
+        progressUpdatedDate: '2026-08-09',
       })
-      expect(saved.progressStages[3].date).toBe('2026-08-08')
+      expect(saved.progressStages[3].date).toBe('2026-08-09')
     })
 
     await user.click(within(firstCard).getByRole('button', { name: '编辑进度' }))

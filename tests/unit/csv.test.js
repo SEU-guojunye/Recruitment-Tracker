@@ -75,6 +75,7 @@ function createFixture() {
   const firstApplication = createApplication({
     id: 'application-a',
     companyId: firstCompany.id,
+    jobTitle: '前端开发工程师',
     applicationLink: 'https://example.com/jobs/1',
     workLocation: '上海',
     statusLink: 'https://example.com/status/1',
@@ -91,6 +92,7 @@ function createFixture() {
   const secondApplication = createApplication({
     id: 'application-b',
     companyId: firstCompany.id,
+    jobTitle: '平台工程师',
     appliedDate: '2026-08-02',
     progressUpdatedDate: '2026-08-02',
     applicationNotes: "'原始单引号",

@@ -18,6 +18,7 @@ export const CSV_HEADERS = Object.freeze([
   'companyCreatedAt',
   'companyUpdatedAt',
   'applicationId',
+  'jobTitle',
   'applicationLink',
   'workLocation',
   'statusLink',
@@ -103,6 +104,7 @@ export function serializeRecruitmentCsv(data) {
       companyId: company.id,
       companyName: company.companyName,
       applicationId: application.id,
+      jobTitle: application.jobTitle,
       applicationLink: application.applicationLink,
       workLocation: application.workLocation,
       statusLink: application.statusLink,
@@ -618,6 +620,7 @@ export class CsvImportExportService {
         const application = createApplication({
           id: applicationId,
           companyId,
+          jobTitle: values.jobTitle,
           applicationLink: values.applicationLink,
           workLocation: values.workLocation,
           statusLink: values.statusLink,

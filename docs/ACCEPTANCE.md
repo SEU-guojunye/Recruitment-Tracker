@@ -6,6 +6,7 @@
 
 - [x] Popup 从当前招聘页提取公司级信息，用户确认后只保存公司，不自动创建投递。
 - [x] 电脑 Dashboard 完成公司、同公司多投递、进度流程和级联删除的本地闭环。
+- [x] 每条投递可在电脑端独立维护岗位名称；共享展示、搜索和只读 Web 均能读取该字段。
 - [x] CSV 覆盖全部公司和投递，可无损往返，自定义流程、备注和多行文本不丢失。
 - [x] 本地变更保留 dirty 修订，Service Worker 使用 `chrome.alarms` 延迟合并上传。
 - [x] 手机 Web 必须有非匿名真实 Session，且只读取当前用户最近一次快照。
@@ -27,6 +28,9 @@
 - [x] 无快照、网络失败、Session 过期和不支持的 schemaVersion 分别展示不同状态。
 - [x] 手机组件树不存在公司/投递/进度/CSV/同步上传写事件。
 - [x] 320、360、390、430 px 下无横向溢出；时间线由桌面横向切换为手机纵向。
+- [x] 手机具体记录字号已放大；纵向时间线收紧为节点与内容两列，桌面环节文字与节点分层展示。
+- [x] 招聘信息最近更新仅展示日期，查看投递/投递/编辑/删除控件保持同一行。
+- [x] 顶部统计卡片使用统一风格的 SVG 线性图标，替换简陋字符图标。
 
 ## 恢复与工程
 
@@ -40,7 +44,7 @@
 
 - 扩展 ID：`jpmabplkjdmlfjpllogjaieehdohkndg`
 - 扩展包：`release/recruitment-tracker-extension-0.1.0.zip`
-- 扩展包 SHA-256：`b83361d2dbc2a4c014ece2e77535ce88a353cbb0d9495831ac1fec324f169001`
+- 扩展包 SHA-256：`bd309eba2670ef0284d5188c9ea19b67597dd751f20a02f7616d6d5941681b58`
 - Web 静态包：`release/recruitment-tracker-web-0.1.0.zip`
 - Web 静态包 SHA-256：`27db0416e7b985e4fe7d966f3a566763a285e092c85ffab96f80088d8000505e`
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
