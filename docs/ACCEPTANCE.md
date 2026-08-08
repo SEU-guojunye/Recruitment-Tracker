@@ -40,7 +40,7 @@
 
 - 扩展 ID：`jpmabplkjdmlfjpllogjaieehdohkndg`
 - 扩展包：`release/recruitment-tracker-extension-0.1.0.zip`
-- 扩展包 SHA-256：`e14b3e68890d745b6ea53c24d7ed2e6d1cc9bef21e19ae5058c34a49fb272d88`
+- 扩展包 SHA-256：`b83361d2dbc2a4c014ece2e77535ce88a353cbb0d9495831ac1fec324f169001`
 - Web 静态包：`release/recruitment-tracker-web-0.1.0.zip`
 - Web 静态包 SHA-256：`27db0416e7b985e4fe7d966f3a566763a285e092c85ffab96f80088d8000505e`
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）

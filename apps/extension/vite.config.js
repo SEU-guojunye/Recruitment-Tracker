@@ -10,6 +10,7 @@ export default defineConfig({
     crx({ manifest })
   ],
   build: {
+    modulePreload: false,
     rollupOptions: {
       input: {
         offscreen: fileURLToPath(new URL('./offscreen.html', import.meta.url)),

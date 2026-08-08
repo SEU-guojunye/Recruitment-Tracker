@@ -13,6 +13,7 @@ const runtimeGlobals = {
 export default [
   globalIgnores([
     '**/dist/**',
+    'release/**',
     'coverage/**',
     'playwright-report/**',
     'test-results/**',
