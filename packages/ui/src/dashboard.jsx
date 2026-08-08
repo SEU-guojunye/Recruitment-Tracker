@@ -46,7 +46,7 @@ export function ExternalLink({ href, children, className = '' }) {
   )
 }
 
-export function PageState({ type, title, description, onRetry }) {
+export function PageState({ type, title, description, actionLabel = '重试', onRetry }) {
   const isError = type === 'error'
   return (
     <section
@@ -61,7 +61,7 @@ export function PageState({ type, title, description, onRetry }) {
       {description ? <p>{description}</p> : null}
       {isError && onRetry ? (
         <button className="rt-button rt-button--secondary" type="button" onClick={onRetry}>
-          重试
+          {actionLabel}
         </button>
       ) : null}
     </section>

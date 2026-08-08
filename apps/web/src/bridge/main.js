@@ -2,7 +2,7 @@ import {
   CloudBaseAuthService,
   getSessionUserId,
 } from '../cloudbase/auth-service.js'
-import { CloudBaseSnapshotRepository } from '../cloudbase/snapshot-repository.js'
+import { CloudBaseSnapshotWriter } from '../cloudbase/snapshot-writer.js'
 
 const CHANNEL = 'recruitment-tracker-cloudbase'
 const parentOrigin = new URLSearchParams(window.location.search).get('parentOrigin')
@@ -10,7 +10,7 @@ const configuredParentOrigins = String(
   import.meta.env.VITE_CLOUDBASE_EXTENSION_ORIGINS || '',
 ).split(',').map((origin) => origin.trim()).filter(Boolean)
 const authService = new CloudBaseAuthService()
-const snapshotRepository = new CloudBaseSnapshotRepository(authService)
+const snapshotRepository = new CloudBaseSnapshotWriter(authService)
 
 const validDevelopmentOrigin = import.meta.env.DEV
   && /^chrome-extension:\/\/[a-p]{32}$/u.test(parentOrigin || '')

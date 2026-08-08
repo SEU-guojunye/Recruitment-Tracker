@@ -1,4 +1,21 @@
 import { expect, test } from '@playwright/test'
+import { READONLY_SNAPSHOT } from '../fixtures/readonly-snapshot.js'
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((snapshot) => {
+    window.__RECRUITMENT_TRACKER_TEST_SERVICES__ = {
+      authService: {
+        getSession: async () => ({ user: { id: 'readonly-user' } }),
+        signInWithPassword: async () => ({
+          session: { user: { id: 'readonly-user' } },
+          userId: 'readonly-user',
+        }),
+        signOut: async () => {},
+      },
+      snapshotReader: { getSnapshot: async () => snapshot },
+    }
+  }, READONLY_SNAPSHOT)
+})
 
 test('web entry renders the readonly shell', async ({ page }) => {
   await page.goto('/')
@@ -8,7 +25,7 @@ test('web entry renders the readonly shell', async ({ page }) => {
   await expect(page.getByLabel('招聘进度：当前为技术一面')).toBeVisible()
 })
 
-for (const width of [320, 390, 1200]) {
+for (const width of [320, 360, 390, 430, 1200]) {
   test(`readonly dashboard has no horizontal overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
@@ -19,6 +36,13 @@ for (const width of [320, 390, 1200]) {
     expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport)
   })
 }
+
+test('readonly component tree exposes no business write controls', async ({ page }) => {
+  await page.goto('/')
+  for (const label of ['新增投递', '导入 CSV', '导出 CSV', '编辑进度', '立即同步']) {
+    await expect(page.getByRole('button', { name: label })).toHaveCount(0)
+  }
+})
 
 test('timeline changes from horizontal to vertical without hiding core information', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
