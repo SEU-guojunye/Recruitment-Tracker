@@ -178,4 +178,29 @@ describe('SyncCoordinator', () => {
     })
     expect(scheduler.schedule).toHaveBeenCalledWith(0)
   })
+
+  it('resumes a persisted dirty revision after an offline failure and coordinator restart', async () => {
+    const repository = await createDirtyRepository()
+    const offline = new Error('offline')
+    offline.code = 'NETWORK_ERROR'
+    const firstSetup = setup(repository, {
+      replaceSnapshot: vi.fn().mockRejectedValue(offline),
+    })
+    await expect(firstSetup.coordinator.synchronize()).resolves.toMatchObject({
+      status: 'failed',
+    })
+    expect((await repository.getEnvelope()).sync.dirty).toBe(true)
+
+    const resumedSetup = setup(repository)
+    await expect(resumedSetup.coordinator.resume()).resolves.toMatchObject({
+      scheduled: true,
+    })
+    expect(resumedSetup.scheduler.schedule).toHaveBeenCalledWith(0)
+    await expect(resumedSetup.coordinator.synchronize()).resolves.toMatchObject({
+      status: 'synced',
+    })
+    expect(await repository.getEnvelope()).toMatchObject({
+      sync: { dirty: false, status: 'synced', lastSyncedRevision: 1 },
+    })
+  })
 })

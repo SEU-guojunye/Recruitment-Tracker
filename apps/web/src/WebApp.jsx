@@ -8,6 +8,7 @@ import { DashboardView, PageState } from '@recruitment-tracker/ui'
 
 function sessionUserId(session) {
   const user = session?.user
+  if (user?.is_anonymous === true || session?.is_anonymous === true) return null
   return user?.id || user?.uid || session?.userId || session?.uid || session?.sub || null
 }
 

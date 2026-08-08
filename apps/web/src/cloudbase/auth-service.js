@@ -11,6 +11,7 @@ function assertNoAuthError(result, fallbackMessage) {
 
 export function getSessionUserId(session) {
   const user = session?.user
+  if (user?.is_anonymous === true || session?.is_anonymous === true) return null
   return user?.id || user?.uid || session?.user_id || session?.uid || session?.sub || null
 }
 

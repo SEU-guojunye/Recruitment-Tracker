@@ -1,16 +1,5 @@
-# React + Vite
+# Readonly Web dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+包含真实 CloudBase Session 守卫、只读快照 Reader、响应式 Dashboard，以及固定扩展 Origin 才能使用的托管桥接页。手机组件树不引用快照上传服务。
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+环境配置与部署说明见仓库根目录 [README](../../README.md)。

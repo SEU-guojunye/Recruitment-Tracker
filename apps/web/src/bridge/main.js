@@ -6,9 +6,13 @@ import { CloudBaseSnapshotWriter } from '../cloudbase/snapshot-writer.js'
 
 const CHANNEL = 'recruitment-tracker-cloudbase'
 const parentOrigin = new URLSearchParams(window.location.search).get('parentOrigin')
-const configuredParentOrigins = String(
+const PRODUCTION_EXTENSION_ORIGIN = 'chrome-extension://jpmabplkjdmlfjpllogjaieehdohkndg'
+const configuredParentOrigins = (String(
   import.meta.env.VITE_CLOUDBASE_EXTENSION_ORIGINS || '',
-).split(',').map((origin) => origin.trim()).filter(Boolean)
+).split(',').map((origin) => origin.trim()).filter(Boolean))
+if (import.meta.env.PROD && configuredParentOrigins.length === 0) {
+  configuredParentOrigins.push(PRODUCTION_EXTENSION_ORIGIN)
+}
 const authService = new CloudBaseAuthService()
 const snapshotRepository = new CloudBaseSnapshotWriter(authService)
 

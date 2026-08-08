@@ -1,7 +1,10 @@
 const OFFSCREEN_TARGET = 'cloudbase-offscreen'
 const BRIDGE_TIMEOUT_MS = 20_000
+const PRODUCTION_BRIDGE_URL = 'https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/extension-bridge.html'
 const bridgeUrl = import.meta.env.VITE_CLOUDBASE_BRIDGE_URL
-  || 'http://localhost:5173/extension-bridge.html'
+  || (import.meta.env.PROD
+    ? PRODUCTION_BRIDGE_URL
+    : 'http://localhost:5173/extension-bridge.html')
 const bridgeOrigin = new URL(bridgeUrl).origin
 const extensionOrigin = new URL(chrome.runtime.getURL('/')).origin
 const bridgeFrame = document.createElement('iframe')

@@ -4,22 +4,22 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
   test.setTimeout(60_000)
   await unusedPage.close()
   const extensionPath = new URL('../../apps/extension/dist', import.meta.url).pathname.slice(1)
-  const context = await chromium.launchPersistentContext(
-    testInfo.outputPath('dashboard-user-data'),
-    {
+  const userDataDir = testInfo.outputPath('dashboard-user-data')
+  const launch = () => chromium.launchPersistentContext(userDataDir, {
       channel: 'chromium',
       headless: true,
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
       ],
-    },
-  )
+    })
+  let context = await launch()
 
   try {
     let serviceWorker = context.serviceWorkers()[0]
     if (!serviceWorker) serviceWorker = await context.waitForEvent('serviceworker')
     const extensionId = new URL(serviceWorker.url()).host
+    expect(extensionId).toBe('jpmabplkjdmlfjpllogjaieehdohkndg')
     let page = await context.newPage()
     await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
 
@@ -50,6 +50,17 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
       companies: [{ companyName: '端到端公司' }],
       applications: [{ workLocation: '上海 / 远程' }],
     })
+
+    await context.close()
+    context = await launch()
+    serviceWorker = context.serviceWorkers()[0]
+    if (!serviceWorker) serviceWorker = await context.waitForEvent('serviceworker')
+    expect(new URL(serviceWorker.url()).host).toBe(extensionId)
+    page = await context.newPage()
+    await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
+    await expect(page.getByText('端到端公司')).toBeVisible()
+    await page.getByRole('button', { name: '展开端到端公司' }).click()
+    await expect(page.getByText('上海 / 远程')).toBeVisible()
   } finally {
     await context.close()
   }

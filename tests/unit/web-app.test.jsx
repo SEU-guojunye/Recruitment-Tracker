@@ -38,6 +38,20 @@ describe('readonly WebApp', () => {
     expect(snapshotReader.getSnapshot).toHaveBeenCalledOnce()
   })
 
+  it('rejects an anonymous session before any snapshot read', async () => {
+    const snapshotReader = { getSnapshot: vi.fn() }
+    render(<WebApp
+      authService={authenticatedAuth({
+        getSession: vi.fn().mockResolvedValue({
+          user: { id: 'anonymous-user', is_anonymous: true },
+        }),
+      })}
+      snapshotReader={snapshotReader}
+    />)
+    expect(await screen.findByRole('heading', { name: '查看最近一次求职快照' })).toBeInTheDocument()
+    expect(snapshotReader.getSnapshot).not.toHaveBeenCalled()
+  })
+
   it('shows a dedicated no-snapshot state for an authenticated user', async () => {
     render(<WebApp
       authService={authenticatedAuth()}
