@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   APPLICATION_SCOPES,
   ApplicationService,
   ChromeLocalRepository,
   CompanyNameConflictError,
   CompanyService,
+  CsvImportExportService,
   DomainValidationError,
   toLocalDate,
 } from '@recruitment-tracker/core'
@@ -15,6 +16,7 @@ import {
   PageState,
 } from '@recruitment-tracker/ui'
 import { ProgressEditorDialog } from './ProgressEditorDialog.jsx'
+import { CsvImportDialog } from './CsvImportDialog.jsx'
 
 let defaultRepository
 
@@ -376,6 +378,11 @@ export function DashboardApp({ repository: repositoryProp }) {
     () => repository ? new ApplicationService(repository) : null,
     [repository],
   )
+  const csvService = useMemo(
+    () => repository ? new CsvImportExportService(repository) : null,
+    [repository],
+  )
+  const csvFileInputRef = useRef(null)
   const [envelope, setEnvelope] = useState(null)
   const [capacity, setCapacity] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -390,6 +397,8 @@ export function DashboardApp({ repository: repositoryProp }) {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [progressEditor, setProgressEditor] = useState(null)
   const [quickProgressId, setQuickProgressId] = useState(null)
+  const [csvImport, setCsvImport] = useState(null)
+  const [csvBusy, setCsvBusy] = useState(false)
   const [toast, setToast] = useState('')
 
   const load = useCallback(async ({ showLoading = true } = {}) => {
@@ -494,6 +503,40 @@ export function DashboardApp({ repository: repositoryProp }) {
     }
   }
 
+  async function exportCsv() {
+    setCsvBusy(true)
+    try {
+      const csv = await csvService.exportCsv()
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `recruitment-tracker-${toLocalDate()}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      setToast('完整 CSV 已导出')
+    } catch (error) {
+      setToast(`CSV 导出失败：${readableError(error)}`)
+    } finally {
+      setCsvBusy(false)
+    }
+  }
+
+  async function chooseCsvFile(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setCsvBusy(true)
+    try {
+      const sourceText = await file.text()
+      const initialPreview = await csvService.previewImport(sourceText)
+      setCsvImport({ fileName: file.name, sourceText, initialPreview })
+    } catch (error) {
+      setToast(`CSV 读取失败：${readableError(error)}`)
+    } finally {
+      setCsvBusy(false)
+    }
+  }
+
   if (!repository && !loading) {
     return (
       <main className="rt-main">
@@ -529,6 +572,31 @@ export function DashboardApp({ repository: repositoryProp }) {
         onRetry={() => void load()}
         headerActions={(
           <>
+            <label className="rt-sr-only" htmlFor="csv-file-input">选择 CSV 文件</label>
+            <input
+              ref={csvFileInputRef}
+              className="rt-sr-only"
+              id="csv-file-input"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => void chooseCsvFile(event)}
+            />
+            <button
+              className="rt-action-button is-secondary"
+              type="button"
+              disabled={csvBusy}
+              onClick={() => csvFileInputRef.current?.click()}
+            >
+              导入 CSV
+            </button>
+            <button
+              className="rt-action-button is-secondary"
+              type="button"
+              disabled={csvBusy}
+              onClick={() => void exportCsv()}
+            >
+              导出 CSV
+            </button>
             <span className={capacity?.warning ? 'rt-capacity is-warning' : 'rt-capacity'}>
               本地占用 {capacityLabel}
             </span>
@@ -645,6 +713,21 @@ export function DashboardApp({ repository: repositoryProp }) {
           applicationService={applicationService}
           onSaved={() => reloadAfterWrite('招聘进度流程已保存')}
           onClose={() => setProgressEditor(null)}
+        />
+      ) : null}
+      {csvImport ? (
+        <CsvImportDialog
+          fileName={csvImport.fileName}
+          sourceText={csvImport.sourceText}
+          initialPreview={csvImport.initialPreview}
+          csvService={csvService}
+          onCommitted={async (summary) => {
+            setCsvImport(null)
+            await reloadAfterWrite(
+              `CSV 导入成功：新增 ${summary.companyCreates + summary.applicationCreates} 条，更新 ${summary.companyUpdates + summary.applicationUpdates} 条`,
+            )
+          }}
+          onClose={() => setCsvImport(null)}
         />
       ) : null}
       {toast ? <div className="rt-toast" role="status">{toast}</div> : null}

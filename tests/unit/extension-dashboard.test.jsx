@@ -4,9 +4,10 @@ import {
   ChromeLocalRepository,
   createApplication,
   createCompanyRecord,
+  serializeRecruitmentCsv,
 } from '@recruitment-tracker/core'
 import { DashboardApp } from '../../apps/extension/src/dashboard/DashboardApp.jsx'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 class FakeStorageArea {
   constructor() {
@@ -60,6 +61,54 @@ async function addApplication(user, location) {
 }
 
 describe('editable extension dashboard', () => {
+  it('exports a downloadable CSV from the editable header', async () => {
+    const user = userEvent.setup()
+    const createObjectURL = vi.fn(() => 'blob:recruitment-export')
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL })
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL })
+    let downloadName = ''
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+      downloadName = this.download
+    })
+
+    render(<DashboardApp repository={createRepository()} />)
+    await screen.findByText('电脑编辑模式')
+    await user.click(screen.getByRole('button', { name: '导出 CSV' }))
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
+    expect(downloadName).toMatch(/^recruitment-tracker-\d{4}-\d{2}-\d{2}\.csv$/u)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:recruitment-export')
+    expect(await screen.findByText('完整 CSV 已导出')).toBeInTheDocument()
+    click.mockRestore()
+  })
+
+  it('previews and atomically imports a selected CSV after confirmation', async () => {
+    const user = userEvent.setup()
+    const repository = createRepository()
+    const importedCompany = createCompanyRecord({
+      id: 'company-csv',
+      companyName: 'CSV 导入公司',
+      companyNotes: '由表格维护',
+    }, { now: new Date('2026-08-08T10:00:00.000Z') })
+    const csv = serializeRecruitmentCsv({ companies: [importedCompany], applications: [] })
+    const file = new File([csv], 'recruitment.csv', { type: 'text/csv' })
+    Object.defineProperty(file, 'text', { value: async () => csv })
+
+    render(<DashboardApp repository={repository} />)
+    await screen.findByText('电脑编辑模式')
+    await user.upload(screen.getByLabelText('选择 CSV 文件'), file)
+
+    const dialog = await screen.findByRole('dialog', { name: '导入 CSV' })
+    expect(within(dialog).getByText('recruitment.csv', { exact: false })).toBeInTheDocument()
+    expect(within(dialog).getByText('校验通过。', { exact: false })).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '确认导入' }))
+
+    expect(await screen.findByText(/CSV 导入成功：新增 1 条/u)).toBeInTheDocument()
+    expect((await repository.getData()).companies).toEqual([importedCompany])
+    expect((await repository.getEnvelope()).sync.localRevision).toBe(1)
+  })
+
   it('completes company/application CRUD and two-step cascade deletion', async () => {
     const user = userEvent.setup()
     const repository = createRepository()
