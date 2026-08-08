@@ -51,12 +51,12 @@
 - Event Function：`recruitmentSnapshot`（Node.js 18.15，Event，Active/Available）
 - Web Service：`recruitment-tracker`
 - Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com`
-- Web Version：`recruitment-tracker-002`
-- Web Build ID：`2601563207`（`SUCCESS`）
+- Web Version：`recruitment-tracker-003`
+- Web Build ID：`2601563472`（`SUCCESS`）
 
 ## 线上发布验证
 
-- [x] CloudBase 应用详情回读为 `LatestVersionName=recruitment-tracker-002`、`LatestStatus=SUCCESS`。
+- [x] CloudBase 应用详情回读为 `LatestVersionName=recruitment-tracker-003`、`LatestStatus=SUCCESS`。
 - [x] 生产首页返回 HTTP 200，并包含 Web 应用挂载节点。
 - [x] `/extension-bridge.html` 返回 HTTP 200，并加载生产桥接模块和只读快照模块。
 - [x] 真实 Chromium 打开生产首页后正常显示非匿名账号登录页、用户名和密码输入框及登录按钮。
