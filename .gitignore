@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# WebStorm
+.idea/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Operating system
+.DS_Store
+Thumbs.db
