@@ -84,6 +84,10 @@ export function aggregateCompanies(companies, applications) {
         applications: companyApplications,
         applicationCount: companyApplications.length,
         latestApplication: companyApplications[0] || null,
+        latestUpdatedAt: maxIsoTimestamp([
+          company.updatedAt,
+          ...companyApplications.map((application) => application.updatedAt),
+        ]),
         progressCounts,
         hasActiveApplication: companyApplications.some(
           (application) => !application.progressIsTerminal,

@@ -272,7 +272,7 @@ function RecruitmentCompanyList({ rows, mode, renderCompanyActions }) {
             <strong>{row.latestApplication?.progressStatus || '暂无'}</strong>
           </div>
           <div className="rt-mobile-field" data-label="最近更新">
-            <span>{formatDate(row.latestApplication?.progressUpdatedDate)}</span>
+            <span>{formatTimestamp(row.latestUpdatedAt)}</span>
           </div>
           {mode === 'editable' && renderCompanyActions ? (
             <div className="rt-row-actions">{renderCompanyActions(row.company)}</div>
@@ -384,7 +384,9 @@ export function DashboardView({
             <div><strong>Recruitment Tracker</strong><span>PERSONAL JOB HUB</span></div>
           </div>
           <div className="rt-topbar__actions">
-            {mode === 'readonly' ? <span className="rt-readonly-badge">手机只读模式</span> : null}
+            <span className={mode === 'readonly' ? 'rt-mode-badge' : 'rt-mode-badge is-editable'}>
+              {mode === 'readonly' ? '手机只读模式' : '电脑编辑模式'}
+            </span>
             {headerActions}
           </div>
         </header>

@@ -253,6 +253,8 @@ describe('dataset integrity, statistics and deterministic filtering', () => {
     })
     expect(aggregateCompanies([company], [first, second])[0].latestApplication.id)
       .toBe('application-a')
+    expect(aggregateCompanies([company], [first, second])[0].latestUpdatedAt)
+      .toBe('2026-08-08T11:00:00.000Z')
   })
 
   it('defaults to active applications and filters by stable phase, not custom names', () => {
