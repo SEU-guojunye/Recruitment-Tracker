@@ -1,0 +1,22 @@
+{
+  "name": "recruitment-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/web",
+    "apps/extension",
+    "packages/core",
+    "packages/ui"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:extension": "npm run dev --workspace apps/extension",
+    "build:web": "npm run build --workspace apps/web",
+    "build:extension": "npm run build --workspace apps/extension",
+    "build": "npm run build:web && npm run build:extension",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  }
+}
