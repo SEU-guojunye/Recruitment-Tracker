@@ -10,6 +10,10 @@ const handleSnapshotRequest = createSnapshotHandler({
   getUserId() {
     return auth.getUserInfo()?.uid || null
   },
+  async getSnapshot(userId) {
+    const result = await snapshots.doc(userId).get()
+    return Array.isArray(result?.data) ? result.data[0] || null : result?.data || null
+  },
   async replaceSnapshot(userId, snapshot) {
     const document = {
       ownerId: userId,

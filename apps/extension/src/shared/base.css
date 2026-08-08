@@ -137,3 +137,108 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.rt-topbar__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.rt-sync-status {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #e5eaf1;
+  border-radius: 999px;
+  color: #69778c;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rt-sync-status.is-synced {
+  color: #166534;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.rt-sync-status.is-dirty,
+.rt-sync-status.is-syncing {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.rt-sync-status.is-failed,
+.rt-sync-status.is-accountMismatch,
+.rt-sync-status.is-deviceConflict {
+  color: #8f3340;
+  border-color: #f1c7cc;
+  background: #fff7f8;
+}
+
+.rt-sync-account-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.rt-sync-account-summary div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e5eaf1;
+  border-radius: 9px;
+  background: #fbfcff;
+}
+
+.rt-sync-account-summary span {
+  color: #69778c;
+  font-size: 9px;
+}
+
+.rt-sync-account-summary strong {
+  overflow-wrap: anywhere;
+  color: #172554;
+  font-size: 11px;
+}
+
+.rt-sync-conflict {
+  display: grid;
+  gap: 11px;
+  margin-top: 13px;
+  padding: 13px;
+  border: 1px solid #f1c7cc;
+  border-radius: 10px;
+  color: #6f3940;
+  background: #fff7f8;
+}
+
+.rt-sync-conflict h3,
+.rt-sync-conflict p {
+  margin: 0;
+}
+
+.rt-sync-conflict h3 {
+  font-size: 12px;
+}
+
+.rt-sync-conflict p {
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.rt-sync-service-error {
+  position: fixed;
+  z-index: 60;
+  right: 18px;
+  bottom: 18px;
+  max-width: min(420px, calc(100vw - 36px));
+  padding: 10px 12px;
+  border: 1px solid #f1c7cc;
+  border-radius: 9px;
+  color: #8f3340;
+  background: #fff7f8;
+  box-shadow: 0 10px 24px rgba(143, 51, 64, 0.15);
+  font-size: 10px;
+}

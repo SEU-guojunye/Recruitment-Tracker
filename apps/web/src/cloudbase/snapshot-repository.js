@@ -35,13 +35,21 @@ export class CloudBaseSnapshotRepository {
     return result?.data?.[0] || null
   }
 
-  async replaceSnapshot({ sourceDeviceId, sourceRevision, data }) {
+  async replaceSnapshot(
+    { sourceDeviceId, sourceRevision, data },
+    { allowDeviceTakeover = false } = {},
+  ) {
     const { userId } = await this.authService.requireSession()
     const result = await callSnapshotFunction({
       action: 'replaceSnapshot',
+      allowDeviceTakeover,
       snapshot: { sourceDeviceId, sourceRevision, data },
     })
-    if (result.ownerId !== userId || result.sourceRevision !== sourceRevision) {
+    if (
+      result.ownerId !== userId ||
+      result.sourceDeviceId !== sourceDeviceId ||
+      result.sourceRevision !== sourceRevision
+    ) {
       throw new Error('快照函数返回的用户或修订号不匹配')
     }
     const saved = await this.getSnapshotForOwner(userId)

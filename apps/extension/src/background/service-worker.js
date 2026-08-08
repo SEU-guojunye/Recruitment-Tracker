@@ -1,6 +1,14 @@
-const POC_ALARM = 'recruitment-tracker-poc-sync'
-const POC_PENDING_KEY = '__pocPendingSnapshot'
-const POC_STATUS_KEY = '__pocSyncStatus'
+import {
+  ChromeLocalRepository,
+  LOCAL_ENVELOPE_KEY,
+  SyncCoordinator,
+} from '@recruitment-tracker/core'
+import {
+  CloudBaseSnapshotWriter,
+  ExtensionAuthService,
+} from '../cloudbase/services.js'
+
+const SYNC_ALARM = 'recruitment-tracker-sync'
 const OFFSCREEN_TARGET = 'cloudbase-offscreen'
 const OFFSCREEN_PATH = 'offscreen.html'
 
@@ -40,7 +48,7 @@ async function ensureOffscreenDocument() {
   await creatingOffscreenDocument
 }
 
-async function sendCloudBaseMessage(action, payload = {}) {
+async function requestHostedBridge(action, payload = {}) {
   await ensureOffscreenDocument()
   const response = await chrome.runtime.sendMessage({
     action,
@@ -57,84 +65,142 @@ async function sendCloudBaseMessage(action, payload = {}) {
   return response.data
 }
 
-async function savePocStatus(status) {
-  await chrome.storage.local.set({
-    [POC_STATUS_KEY]: {
-      ...status,
-      recordedAt: new Date().toISOString(),
-    },
-  })
-}
-
-async function runPendingPocSnapshot() {
-  const stored = await chrome.storage.local.get(POC_PENDING_KEY)
-  const pending = stored[POC_PENDING_KEY]
-  if (!pending) return
-  await savePocStatus({ state: 'syncing', revision: pending.sourceRevision })
-  try {
-    const session = await sendCloudBaseMessage('getSession')
-    const snapshot = await sendCloudBaseMessage('replaceSnapshot', { snapshot: pending })
-    await chrome.storage.local.remove(POC_PENDING_KEY)
-    await savePocStatus({
-      state: 'synced',
-      revision: snapshot.revision,
-      userId: session.userId,
+const repository = new ChromeLocalRepository()
+const authService = new ExtensionAuthService(requestHostedBridge)
+const snapshotWriter = new CloudBaseSnapshotWriter(requestHostedBridge)
+const scheduler = {
+  schedule(delayMs) {
+    return chrome.alarms.create(SYNC_ALARM, {
+      when: Date.now() + Math.max(0, delayMs),
     })
-  } catch (error) {
-    await savePocStatus({ state: 'failed', error: serializeError(error) })
-    throw error
+  },
+}
+const syncCoordinator = new SyncCoordinator({
+  repository,
+  authService,
+  snapshotWriter,
+  scheduler,
+})
+
+async function sessionState() {
+  const session = await authService.getSession()
+  let envelope = await repository.getEnvelope()
+  if (!session?.userId) {
+    envelope = await repository.markSyncBlocked('signedOut', {
+      code: 'UNAUTHENTICATED',
+      message: '当前未登录 CloudBase',
+    })
+    return { session: null, envelope }
+  }
+
+  if (
+    envelope.settings.boundUserId &&
+    envelope.settings.boundUserId !== session.userId
+  ) {
+    envelope = await repository.markSyncBlocked('accountMismatch', {
+      code: 'ACCOUNT_MISMATCH',
+      message: '登录账号与本地数据绑定账号不一致',
+      boundUserId: envelope.settings.boundUserId,
+      requestedUserId: session.userId,
+    })
+  } else if (envelope.sync.status === 'signedOut') {
+    envelope = await repository.setSyncState(
+      envelope.sync.dirty
+        ? 'dirty'
+        : envelope.sync.lastSyncedAt
+          ? 'synced'
+          : 'idle',
+    )
+    if (envelope.sync.dirty) await syncCoordinator.schedulePending(0)
+  }
+  return { session, envelope }
+}
+
+async function handleMessage(message) {
+  switch (message?.action) {
+    case 'authSignIn': {
+      const session = await authService.signInWithPassword(message.credentials)
+      const sync = await syncCoordinator.synchronize()
+      return { session, sync, envelope: await repository.getEnvelope() }
+    }
+    case 'authGetSession':
+      return sessionState()
+    case 'authSignOut':
+      await authService.signOut()
+      return {
+        signedOut: true,
+        envelope: await repository.markSyncBlocked('signedOut', {
+          code: 'UNAUTHENTICATED',
+          message: '已退出 CloudBase，同步已暂停',
+        }),
+      }
+    case 'syncNow':
+      return {
+        sync: await syncCoordinator.synchronize(),
+        envelope: await repository.getEnvelope(),
+      }
+    case 'syncTakeover':
+      return {
+        sync: await syncCoordinator.synchronize({ allowDeviceTakeover: true }),
+        envelope: await repository.getEnvelope(),
+      }
+    case 'syncClearAndRebind': {
+      const session = await authService.getSession()
+      if (!session?.userId) {
+        const error = new Error('登录已过期，请重新登录')
+        error.code = 'UNAUTHENTICATED'
+        throw error
+      }
+      await repository.clearAndRebind(session.userId)
+      return {
+        sync: await syncCoordinator.synchronize(),
+        envelope: await repository.getEnvelope(),
+      }
+    }
+    case 'snapshotRemoveOwn':
+      return requestHostedBridge('removeOwnSnapshot')
+    default:
+      throw new Error('未知的扩展同步消息')
   }
 }
 
-async function handlePocMessage(message) {
-  switch (message?.action) {
-    case 'pocSignIn':
-      return sendCloudBaseMessage('signIn', { credentials: message.credentials })
-    case 'pocGetSession':
-      return sendCloudBaseMessage('getSession')
-    case 'pocSignOut':
-      return sendCloudBaseMessage('signOut')
-    case 'pocReplaceSnapshot':
-      return sendCloudBaseMessage('replaceSnapshot', { snapshot: message.snapshot })
-    case 'pocReadSnapshot':
-      return sendCloudBaseMessage('readSnapshot', { ownerId: message.ownerId })
-    case 'pocProbeForeignWrite':
-      return sendCloudBaseMessage('probeForeignWrite', { ownerId: message.ownerId })
-    case 'pocScheduleSnapshot':
-      await chrome.storage.local.set({ [POC_PENDING_KEY]: message.snapshot })
-      await savePocStatus({ state: 'scheduled', revision: message.snapshot.sourceRevision })
-      await chrome.alarms.create(POC_ALARM, { when: Date.now() + 800 })
-      return { scheduled: true }
-    case 'pocGetStatus': {
-      const stored = await chrome.storage.local.get(POC_STATUS_KEY)
-      return stored[POC_STATUS_KEY] || null
-    }
-    case 'pocRemoveOwnSnapshot':
-      return sendCloudBaseMessage('removeOwnSnapshot')
-    default:
-      throw new Error('未知的 CloudBase PoC 消息')
-  }
+function runScheduledSync() {
+  void syncCoordinator.synchronize()
 }
 
 chrome.runtime.onInstalled.addListener(() => {
   void restrictStorageAccess()
+  void syncCoordinator.resume()
 })
 
 chrome.runtime.onStartup.addListener(() => {
   void restrictStorageAccess()
+  void syncCoordinator.resume()
+})
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  const envelope = changes[LOCAL_ENVELOPE_KEY]?.newValue
+  if (
+    areaName === 'local' &&
+    envelope?.sync?.dirty &&
+    envelope.sync.status === 'dirty'
+  ) {
+    void syncCoordinator.schedulePending()
+  }
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === POC_ALARM) void runPendingPocSnapshot()
+  if (alarm.name === SYNC_ALARM) runScheduledSync()
 })
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.target === OFFSCREEN_TARGET) return false
 
-  handlePocMessage(message)
+  handleMessage(message)
     .then((data) => sendResponse({ ok: true, data }))
     .catch((error) => sendResponse({ ok: false, error: serializeError(error) }))
   return true
 })
 
 void restrictStorageAccess()
+void syncCoordinator.resume()

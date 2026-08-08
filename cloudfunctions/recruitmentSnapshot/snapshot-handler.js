@@ -12,7 +12,13 @@ function assertSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== 'object') {
     throw new SnapshotFunctionError('INVALID_SNAPSHOT', '快照不能为空')
   }
-  if (!snapshot.sourceDeviceId || !Number.isSafeInteger(snapshot.sourceRevision)) {
+  if (
+    typeof snapshot.sourceDeviceId !== 'string' ||
+    snapshot.sourceDeviceId.length < 1 ||
+    snapshot.sourceDeviceId.length > 200 ||
+    !Number.isSafeInteger(snapshot.sourceRevision) ||
+    snapshot.sourceRevision < 0
+  ) {
     throw new SnapshotFunctionError('INVALID_SNAPSHOT', '快照缺少设备 ID 或有效修订号')
   }
   if (!snapshot.data || !Array.isArray(snapshot.data.companies) || !Array.isArray(snapshot.data.applications)) {
@@ -23,7 +29,7 @@ function assertSnapshot(snapshot) {
   }
 }
 
-function createSnapshotHandler({ getUserId, replaceSnapshot, removeSnapshot }) {
+function createSnapshotHandler({ getUserId, getSnapshot, replaceSnapshot, removeSnapshot }) {
   return async function handleSnapshotRequest(event = {}) {
     const userId = getUserId()
     if (!userId) throw new SnapshotFunctionError('UNAUTHENTICATED', '未取得真实 CloudBase 用户身份')
@@ -31,9 +37,30 @@ function createSnapshotHandler({ getUserId, replaceSnapshot, removeSnapshot }) {
     switch (event.action) {
       case 'replaceSnapshot': {
         assertSnapshot(event.snapshot)
+        const current = await getSnapshot(userId)
+        if (
+          current?.sourceDeviceId &&
+          current.sourceDeviceId !== event.snapshot.sourceDeviceId &&
+          event.allowDeviceTakeover !== true
+        ) {
+          throw new SnapshotFunctionError(
+            'DEVICE_CONFLICT',
+            '云端快照已绑定另一台编辑设备，需要明确接管后才能覆盖',
+          )
+        }
+        if (
+          current?.sourceDeviceId === event.snapshot.sourceDeviceId &&
+          current.sourceRevision > event.snapshot.sourceRevision
+        ) {
+          throw new SnapshotFunctionError(
+            'STALE_SNAPSHOT_REVISION',
+            '本地快照修订号早于云端，已拒绝回退覆盖',
+          )
+        }
         const saved = await replaceSnapshot(userId, event.snapshot)
         return {
           ownerId: userId,
+          sourceDeviceId: saved.sourceDeviceId,
           sourceRevision: saved.sourceRevision,
         }
       }

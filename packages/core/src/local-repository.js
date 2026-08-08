@@ -169,6 +169,68 @@ export class ChromeLocalRepository {
     return this.transactData(() => clone(data))
   }
 
+  setSyncState(status, { error = null } = {}) {
+    return this.enqueue(async () => {
+      const envelope = await this.readOrCreate()
+      return this.writeEnvelope({
+        ...envelope,
+        sync: {
+          ...envelope.sync,
+          status,
+          lastError: error,
+        },
+      })
+    })
+  }
+
+  markSyncing() {
+    return this.setSyncState('syncing')
+  }
+
+  markSyncBlocked(status, error) {
+    if (!['signedOut', 'accountMismatch', 'deviceConflict'].includes(status)) {
+      throw new Error('同步阻塞状态无效')
+    }
+    return this.setSyncState(status, { error })
+  }
+
+  markSyncFailed(error) {
+    return this.setSyncState('failed', { error })
+  }
+
+  markSynced({ sourceRevision, syncedAt, userId }) {
+    return this.enqueue(async () => {
+      const envelope = await this.readOrCreate()
+      const boundUserId = envelope.settings.boundUserId
+      if (boundUserId && boundUserId !== userId) {
+        throw new AccountBindingError(boundUserId, userId)
+      }
+      if (
+        !Number.isSafeInteger(sourceRevision) ||
+        sourceRevision < 0 ||
+        sourceRevision > envelope.sync.localRevision
+      ) {
+        throw new Error('已同步修订号无效')
+      }
+      const dirty = envelope.sync.localRevision > sourceRevision
+      return this.writeEnvelope({
+        ...envelope,
+        settings: { ...envelope.settings, boundUserId: userId },
+        sync: {
+          ...envelope.sync,
+          lastSyncedRevision: Math.max(
+            envelope.sync.lastSyncedRevision,
+            sourceRevision,
+          ),
+          lastSyncedAt: syncedAt,
+          lastError: null,
+          dirty,
+          status: dirty ? 'dirty' : 'synced',
+        },
+      })
+    })
+  }
+
   exportSnapshot() {
     return this.getEnvelope().then((envelope) => ({
       schemaVersion: envelope.schemaVersion,

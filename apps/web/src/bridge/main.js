@@ -1,12 +1,20 @@
-import { CloudBaseAuthService } from '../cloudbase/auth-service.js'
+import {
+  CloudBaseAuthService,
+  getSessionUserId,
+} from '../cloudbase/auth-service.js'
 import { CloudBaseSnapshotRepository } from '../cloudbase/snapshot-repository.js'
 
 const CHANNEL = 'recruitment-tracker-cloudbase'
 const parentOrigin = new URLSearchParams(window.location.search).get('parentOrigin')
+const configuredParentOrigins = String(
+  import.meta.env.VITE_CLOUDBASE_EXTENSION_ORIGINS || '',
+).split(',').map((origin) => origin.trim()).filter(Boolean)
 const authService = new CloudBaseAuthService()
 const snapshotRepository = new CloudBaseSnapshotRepository(authService)
 
-if (!parentOrigin?.startsWith('chrome-extension://')) {
+const validDevelopmentOrigin = import.meta.env.DEV
+  && /^chrome-extension:\/\/[a-p]{32}$/u.test(parentOrigin || '')
+if (!configuredParentOrigins.includes(parentOrigin) && !validDevelopmentOrigin) {
   throw new Error('CloudBase 桥接页缺少有效扩展来源')
 }
 
@@ -25,27 +33,36 @@ async function handleRequest(action, payload = {}) {
       return { userId }
     }
     case 'getSession': {
-      const { userId } = await authService.requireSession()
-      return { userId }
+      const session = await authService.getSession()
+      const userId = getSessionUserId(session)
+      return userId ? { userId } : null
     }
     case 'signOut':
       await authService.signOut()
       return { signedOut: true }
     case 'replaceSnapshot': {
-      const snapshot = await snapshotRepository.replaceSnapshot(payload.snapshot)
-      return { userId: snapshot.ownerId, revision: snapshot.sourceRevision }
+      const snapshot = await snapshotRepository.replaceSnapshot(payload.snapshot, {
+        allowDeviceTakeover: payload.allowDeviceTakeover === true,
+      })
+      return {
+        ownerId: snapshot.ownerId,
+        sourceDeviceId: snapshot.sourceDeviceId,
+        sourceRevision: snapshot.sourceRevision,
+        updatedAt: snapshot.updatedAt,
+      }
     }
     case 'readSnapshot': {
-      const snapshot = payload.ownerId
-        ? await snapshotRepository.getSnapshotForOwner(payload.ownerId)
-        : await snapshotRepository.getSnapshot()
+      const snapshot = await snapshotRepository.getSnapshot()
       return snapshot
-        ? { ownerId: snapshot.ownerId, revision: snapshot.sourceRevision }
+        ? {
+            ownerId: snapshot.ownerId,
+            schemaVersion: snapshot.schemaVersion,
+            sourceDeviceId: snapshot.sourceDeviceId,
+            sourceRevision: snapshot.sourceRevision,
+            updatedAt: snapshot.updatedAt,
+          }
         : null
     }
-    case 'probeForeignWrite':
-      await snapshotRepository.probeForeignWrite(payload.ownerId)
-      return { unexpectedlyAllowed: true }
     case 'removeOwnSnapshot':
       return { removed: await snapshotRepository.removeOwnSnapshot() }
     default:

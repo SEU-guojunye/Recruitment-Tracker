@@ -17,14 +17,25 @@ import {
 } from '@recruitment-tracker/ui'
 import { ProgressEditorDialog } from './ProgressEditorDialog.jsx'
 import { CsvImportDialog } from './CsvImportDialog.jsx'
+import { SyncAccountDialog } from './SyncAccountDialog.jsx'
+import { SYNC_STATUS_LABELS } from './sync-status.js'
+import { ExtensionSyncClient } from '../cloudbase/runtime-client.js'
 
 let defaultRepository
+let defaultSyncClient
 
 function getDefaultRepository() {
   if (defaultRepository) return defaultRepository
   if (!globalThis.chrome?.storage?.local) return null
   defaultRepository = new ChromeLocalRepository()
   return defaultRepository
+}
+
+function getDefaultSyncClient() {
+  if (defaultSyncClient) return defaultSyncClient
+  if (!globalThis.chrome?.runtime?.sendMessage) return null
+  defaultSyncClient = new ExtensionSyncClient()
+  return defaultSyncClient
 }
 
 function readableError(error) {
@@ -365,7 +376,10 @@ function DeleteDialog({ target, onConfirm, onClose }) {
   )
 }
 
-export function DashboardApp({ repository: repositoryProp }) {
+export function DashboardApp({
+  repository: repositoryProp,
+  syncClient: syncClientProp,
+}) {
   const repository = useMemo(
     () => repositoryProp || getDefaultRepository(),
     [repositoryProp],
@@ -381,6 +395,10 @@ export function DashboardApp({ repository: repositoryProp }) {
   const csvService = useMemo(
     () => repository ? new CsvImportExportService(repository) : null,
     [repository],
+  )
+  const syncClient = useMemo(
+    () => syncClientProp || getDefaultSyncClient(),
+    [syncClientProp],
   )
   const csvFileInputRef = useRef(null)
   const [envelope, setEnvelope] = useState(null)
@@ -399,6 +417,9 @@ export function DashboardApp({ repository: repositoryProp }) {
   const [quickProgressId, setQuickProgressId] = useState(null)
   const [csvImport, setCsvImport] = useState(null)
   const [csvBusy, setCsvBusy] = useState(false)
+  const [syncSession, setSyncSession] = useState(null)
+  const [syncPanelOpen, setSyncPanelOpen] = useState(false)
+  const [syncLoadError, setSyncLoadError] = useState('')
   const [toast, setToast] = useState('')
 
   const load = useCallback(async ({ showLoading = true } = {}) => {
@@ -424,9 +445,38 @@ export function DashboardApp({ repository: repositoryProp }) {
     }
   }, [repository])
 
+  const loadSyncState = useCallback(async () => {
+    if (!syncClient) return
+    setSyncLoadError('')
+    try {
+      const state = await syncClient.getSession()
+      setSyncSession(state.session)
+      await load({ showLoading: false })
+    } catch (error) {
+      setSyncLoadError(readableError(error))
+    }
+  }, [load, syncClient])
+
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0)
     return () => clearTimeout(timer)
+  }, [load])
+
+  useEffect(() => {
+    if (!syncClient) return undefined
+    const timer = setTimeout(() => void loadSyncState(), 0)
+    return () => clearTimeout(timer)
+  }, [loadSyncState, syncClient])
+
+  useEffect(() => {
+    if (!globalThis.chrome?.storage?.onChanged) return undefined
+    const onChanged = (changes, areaName) => {
+      if (areaName === 'local' && changes.recruitmentTrackerEnvelope) {
+        void load({ showLoading: false })
+      }
+    }
+    chrome.storage.onChanged.addListener(onChanged)
+    return () => chrome.storage.onChanged.removeListener(onChanged)
   }, [load])
 
   useEffect(() => {
@@ -514,11 +564,45 @@ export function DashboardApp({ repository: repositoryProp }) {
       anchor.click()
       URL.revokeObjectURL(url)
       setToast('完整 CSV 已导出')
+      return true
     } catch (error) {
       setToast(`CSV 导出失败：${readableError(error)}`)
+      return false
     } finally {
       setCsvBusy(false)
     }
+  }
+
+  async function signInForSync(credentials) {
+    const result = await syncClient.signIn(credentials)
+    setSyncSession(result.session)
+    await load({ showLoading: false })
+    setToast(result.sync.status === 'synced' ? '登录并同步成功' : '登录成功，请处理同步状态')
+  }
+
+  async function signOutFromSync() {
+    await syncClient.signOut()
+    setSyncSession(null)
+    await load({ showLoading: false })
+    setToast('已退出登录，本地数据仍保留')
+  }
+
+  async function syncNow() {
+    const result = await syncClient.syncNow()
+    await load({ showLoading: false })
+    setToast(result.sync.status === 'synced' ? '云端快照已更新' : '同步未完成，请查看状态')
+  }
+
+  async function takeOverDevice() {
+    const result = await syncClient.takeOverDevice()
+    await load({ showLoading: false })
+    setToast(result.sync.status === 'synced' ? '本机已接管云端快照' : '接管未完成，请查看状态')
+  }
+
+  async function clearAndRebind() {
+    const result = await syncClient.clearAndRebind()
+    await load({ showLoading: false })
+    setToast(result.sync.status === 'synced' ? '本地数据已清空并重新绑定' : '已重新绑定，请查看同步状态')
   }
 
   async function chooseCsvFile(event) {
@@ -597,6 +681,15 @@ export function DashboardApp({ repository: repositoryProp }) {
             >
               导出 CSV
             </button>
+            {syncClient ? (
+              <button
+                className={`rt-sync-status is-${envelope?.sync.status || 'idle'}`}
+                type="button"
+                onClick={() => setSyncPanelOpen(true)}
+              >
+                同步：{SYNC_STATUS_LABELS[envelope?.sync.status] || '加载中'}
+              </button>
+            ) : null}
             <span className={capacity?.warning ? 'rt-capacity is-warning' : 'rt-capacity'}>
               本地占用 {capacityLabel}
             </span>
@@ -729,6 +822,28 @@ export function DashboardApp({ repository: repositoryProp }) {
           }}
           onClose={() => setCsvImport(null)}
         />
+      ) : null}
+      {syncPanelOpen && envelope && syncClient ? (
+        <SyncAccountDialog
+          session={syncSession}
+          envelope={envelope}
+          onSignIn={signInForSync}
+          onSignOut={signOutFromSync}
+          onSync={syncNow}
+          onTakeover={takeOverDevice}
+          onClearAndRebind={clearAndRebind}
+          onExport={exportCsv}
+          onClose={() => setSyncPanelOpen(false)}
+        />
+      ) : null}
+      {syncLoadError ? (
+        <button
+          className="rt-sync-service-error"
+          type="button"
+          onClick={() => setSyncPanelOpen(true)}
+        >
+          同步服务异常：{syncLoadError}
+        </button>
       ) : null}
       {toast ? <div className="rt-toast" role="status">{toast}</div> : null}
     </>

@@ -19,6 +19,7 @@ describe('recruitmentSnapshot event function', () => {
     }))
     const handler = createSnapshotHandler({
       getUserId: () => 'user-a',
+      getSnapshot: vi.fn().mockResolvedValue(null),
       replaceSnapshot,
       removeSnapshot: vi.fn(),
     })
@@ -34,6 +35,7 @@ describe('recruitmentSnapshot event function', () => {
   it('rejects unauthenticated and cross-account operations', async () => {
     const unauthenticated = createSnapshotHandler({
       getUserId: () => null,
+      getSnapshot: vi.fn(),
       replaceSnapshot: vi.fn(),
       removeSnapshot: vi.fn(),
     })
@@ -42,6 +44,7 @@ describe('recruitmentSnapshot event function', () => {
 
     const authenticated = createSnapshotHandler({
       getUserId: () => 'user-a',
+      getSnapshot: vi.fn(),
       replaceSnapshot: vi.fn(),
       removeSnapshot: vi.fn(),
     })
@@ -53,11 +56,47 @@ describe('recruitmentSnapshot event function', () => {
     const replaceSnapshot = vi.fn()
     const handler = createSnapshotHandler({
       getUserId: () => 'user-a',
+      getSnapshot: vi.fn(),
       replaceSnapshot,
       removeSnapshot: vi.fn(),
     })
     await expect(handler({ action: 'replaceSnapshot', snapshot: { sourceRevision: 1 } }))
       .rejects.toMatchObject({ code: 'INVALID_SNAPSHOT' })
+    await expect(handler({ action: 'replaceSnapshot', snapshot: validSnapshot(-1) }))
+      .rejects.toMatchObject({ code: 'INVALID_SNAPSHOT' })
     expect(replaceSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('blocks another device and stale same-device revisions unless takeover is explicit', async () => {
+    const replaceSnapshot = vi.fn(async (_userId, snapshot) => snapshot)
+    const getSnapshot = vi.fn().mockResolvedValue({
+      sourceDeviceId: 'device-original',
+      sourceRevision: 5,
+    })
+    const handler = createSnapshotHandler({
+      getUserId: () => 'user-a',
+      getSnapshot,
+      replaceSnapshot,
+      removeSnapshot: vi.fn(),
+    })
+
+    await expect(handler({
+      action: 'replaceSnapshot',
+      snapshot: { ...validSnapshot(6), sourceDeviceId: 'device-other' },
+    })).rejects.toMatchObject({ code: 'DEVICE_CONFLICT' })
+    expect(replaceSnapshot).not.toHaveBeenCalled()
+
+    await expect(handler({
+      action: 'replaceSnapshot',
+      allowDeviceTakeover: true,
+      snapshot: { ...validSnapshot(6), sourceDeviceId: 'device-other' },
+    })).resolves.toMatchObject({
+      sourceDeviceId: 'device-other',
+      sourceRevision: 6,
+    })
+
+    getSnapshot.mockResolvedValue({ sourceDeviceId: 'test-device', sourceRevision: 7 })
+    await expect(handler({ action: 'replaceSnapshot', snapshot: validSnapshot(6) }))
+      .rejects.toMatchObject({ code: 'STALE_SNAPSHOT_REVISION' })
   })
 })

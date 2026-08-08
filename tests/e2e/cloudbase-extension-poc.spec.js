@@ -10,7 +10,7 @@ try {
   // The committed suite skips this integration case unless temporary QA credentials exist.
 }
 
-test('extension service worker keeps CloudBase auth and enforces snapshot isolation', async ({ page: unusedPage }, testInfo) => {
+test('extension service worker keeps formal CloudBase auth and snapshot sync', async ({ page: unusedPage }, testInfo) => {
   test.skip(!credentials, 'CloudBase PoC credentials are not available')
   test.setTimeout(90_000)
   await unusedPage.close()
@@ -49,81 +49,45 @@ test('extension service worker keeps CloudBase auth and enforces snapshot isolat
     )
 
     let page = await openExtensionPage()
-    const loginA = await send(page, { action: 'pocSignIn', credentials: credentials.a })
+    const loginA = await send(page, { action: 'authSignIn', credentials: credentials.a })
     expect(loginA.ok, loginA.error?.message).toBe(true)
-    const userA = loginA.data.userId
+    const userA = loginA.data.session.userId
 
-    const sessionA = await send(page, { action: 'pocGetSession' })
-    expect(sessionA).toEqual({ ok: true, data: { userId: userA } })
+    const sessionA = await send(page, { action: 'authGetSession' })
+    expect(sessionA.data.session).toEqual({ userId: userA })
 
-    const createA = await send(page, {
-      action: 'pocReplaceSnapshot',
-      snapshot: {
-        sourceDeviceId: 'poc-device-a',
-        sourceRevision: 1,
-        data: { companies: [], applications: [] },
-      },
-    })
-    expect(createA).toEqual({ ok: true, data: { userId: userA, revision: 1 } })
-
-    const updateA = await send(page, {
-      action: 'pocReplaceSnapshot',
-      snapshot: {
-        sourceDeviceId: 'poc-device-a',
-        sourceRevision: 2,
-        data: { companies: [{ id: 'poc-company' }], applications: [] },
-      },
-    })
-    expect(updateA).toEqual({ ok: true, data: { userId: userA, revision: 2 } })
-
-    const scheduled = await send(page, {
-      action: 'pocScheduleSnapshot',
-      snapshot: {
-        sourceDeviceId: 'poc-device-a',
-        sourceRevision: 3,
-        data: { companies: [{ id: 'poc-company' }], applications: [{ id: 'poc-app' }] },
-      },
-    })
-    expect(scheduled.ok).toBe(true)
+    const syncA = await send(page, { action: 'syncNow' })
+    expect(syncA.ok, syncA.error?.message).toBe(true)
+    expect(syncA.data.sync.status).toBe('synced')
     await page.close()
 
     await expect.poll(async () => {
       page = await openExtensionPage()
-      const result = await send(page, { action: 'pocGetStatus' })
+      const result = await send(page, { action: 'authGetSession' })
       await page.close()
-      return result.data?.state
+      return result.data?.envelope?.sync?.status
     }, { timeout: 20_000 }).toBe('synced')
 
     page = await openExtensionPage()
-    const sessionAfterClose = await send(page, { action: 'pocGetSession' })
-    expect(sessionAfterClose).toEqual({ ok: true, data: { userId: userA } })
-    await send(page, { action: 'pocSignOut' })
+    const sessionAfterClose = await send(page, { action: 'authGetSession' })
+    expect(sessionAfterClose.data.session).toEqual({ userId: userA })
+    await send(page, { action: 'authSignOut' })
 
-    const loginB = await send(page, { action: 'pocSignIn', credentials: credentials.b })
+    const loginB = await send(page, { action: 'authSignIn', credentials: credentials.b })
     expect(loginB.ok, loginB.error?.message).toBe(true)
-    const userB = loginB.data.userId
+    const userB = loginB.data.session.userId
     expect(userB).not.toBe(userA)
+    expect(loginB.data.sync.status).toBe('accountMismatch')
 
-    const foreignRead = await send(page, { action: 'pocReadSnapshot', ownerId: userA })
-    expect(foreignRead.ok).toBe(false)
-    const foreignWrite = await send(page, { action: 'pocProbeForeignWrite', ownerId: userA })
-    expect(foreignWrite.ok).toBe(false)
+    const rebound = await send(page, { action: 'syncClearAndRebind' })
+    expect(rebound.ok, rebound.error?.message).toBe(true)
+    expect(rebound.data.envelope.settings.boundUserId).toBe(userB)
+    await send(page, { action: 'snapshotRemoveOwn' })
+    await send(page, { action: 'authSignOut' })
 
-    const createB = await send(page, {
-      action: 'pocReplaceSnapshot',
-      snapshot: {
-        sourceDeviceId: 'poc-device-b',
-        sourceRevision: 1,
-        data: { companies: [], applications: [] },
-      },
-    })
-    expect(createB).toEqual({ ok: true, data: { userId: userB, revision: 1 } })
-    await send(page, { action: 'pocRemoveOwnSnapshot' })
-    await send(page, { action: 'pocSignOut' })
-
-    await send(page, { action: 'pocSignIn', credentials: credentials.a })
-    await send(page, { action: 'pocRemoveOwnSnapshot' })
-    await send(page, { action: 'pocSignOut' })
+    await send(page, { action: 'authSignIn', credentials: credentials.a })
+    await send(page, { action: 'snapshotRemoveOwn' })
+    await send(page, { action: 'authSignOut' })
   } finally {
     await context.close()
   }
