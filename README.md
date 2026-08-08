@@ -33,7 +33,7 @@ npm run test:e2e
 
 ## 个人安装
 
-1. 解压 `release/recruitment-tracker-extension-0.1.0.zip`。
+1. 解压 `release/recruitment-tracker-extension-0.1.2.zip`。
 2. 打开 Chrome `chrome://extensions` 并启用开发者模式。
 3. 选择“加载已解压的扩展程序”，指向解压目录。
 4. 扩展稳定 ID 为 `jpmabplkjdmlfjpllogjaieehdohkndg`。

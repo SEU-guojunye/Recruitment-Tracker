@@ -1,4 +1,4 @@
-# Recruitment Tracker v0.1.0 验收记录
+# Recruitment Tracker v0.1.2 验收记录
 
 验收基准：`PRD.md` v1.5；使用范围：个人单账号、单编辑设备，保留账号适配器、版本化模型和 Reader/Writer 边界以便扩展。
 
@@ -43,9 +43,9 @@
 ## 发布产物
 
 - 扩展 ID：`jpmabplkjdmlfjpllogjaieehdohkndg`
-- 扩展包：`release/recruitment-tracker-extension-0.1.0.zip`
+- 扩展包：`release/recruitment-tracker-extension-0.1.2.zip`
 - 扩展包 SHA-256：`a2647a322f93acbf822665ff5d8fd881f1d759e8ecb5690e366dfd41674a288c`
-- Web 静态包：`release/recruitment-tracker-web-0.1.0.zip`
+- Web 静态包：`release/recruitment-tracker-web-0.1.2.zip`
 - Web 静态包 SHA-256：`29a886f9d46bc1f72acc9dc28a2ce48d81fdcda0b4c5370c750a167d91ff0ae4`
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - Event Function：`recruitmentSnapshot`（Node.js 18.15，Event，Active/Available）
