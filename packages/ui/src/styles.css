@@ -112,8 +112,7 @@ button { cursor: pointer; }
 .rt-record-index { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; color: var(--rt-blue-700); background: var(--rt-blue-50); font-size: 9px; font-weight: 850; }
 .rt-application-card__identity { min-width: 0; }
 .rt-application-card__identity h4 { color: var(--rt-ink); font-size: 14px; }
-.rt-record-label { display: block; margin-top: 3px; color: var(--rt-muted-soft); font-size: 10px; }
-.rt-application-card__identity a, .rt-application-card__identity > span:not(.rt-record-label) { display: inline-block; max-width: 190px; overflow: hidden; margin: 5px 6px 0 0; color: var(--rt-muted-soft); font-size: 11px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.rt-application-card__identity a, .rt-application-card__identity > span { display: inline-block; max-width: 190px; overflow: hidden; margin: 5px 6px 0 0; color: var(--rt-muted-soft); font-size: 11px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .rt-application-card__identity a { color: var(--rt-blue-600); }
 .rt-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 
@@ -218,8 +217,7 @@ button { cursor: pointer; }
   .rt-stat__value { font-size: 21px; }
   .rt-stat__icon { width: 32px; height: 32px; }
   .rt-application-card__identity h4 { font-size: 16px; }
-  .rt-record-label { font-size: 11px; }
-  .rt-application-card__identity a, .rt-application-card__identity > span:not(.rt-record-label) { font-size: 12px; }
+  .rt-application-card__identity a, .rt-application-card__identity > span { font-size: 12px; }
   .rt-labelled-value strong { font-size: 14px; }
   .rt-toolbar { align-items: stretch; flex-direction: column; }
   .rt-search, .rt-toolbar input { width: 100%; }

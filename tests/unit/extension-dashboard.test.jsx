@@ -133,7 +133,8 @@ describe('editable extension dashboard', () => {
     ]))
     expect(screen.getByText('前端开发工程师')).toBeInTheDocument()
 
-    expect(screen.getAllByText(/投递记录 0[12]/u)).toHaveLength(2)
+    expect(screen.getByText('前端开发工程师')).toBeInTheDocument()
+    expect(screen.getByText('投递记录 02')).toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
     const companyRow = screen.getByText('重点关注校招').closest('.rt-recruitment-row')
     await user.click(within(companyRow).getByRole('button', { name: '删除' }))

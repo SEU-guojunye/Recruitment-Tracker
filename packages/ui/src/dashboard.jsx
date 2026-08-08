@@ -199,7 +199,6 @@ function ApplicationCard({ application, index, mode, renderActions }) {
         <span className="rt-record-index">{String(index + 1).padStart(2, '0')}</span>
         <div className="rt-application-card__identity">
           <h4>{jobTitle || recordLabel}</h4>
-          {jobTitle ? <span className="rt-record-label">{recordLabel}</span> : null}
           <ExternalLink href={application.applicationLink}>
             {linkLabel(application.applicationLink)}
           </ExternalLink>
