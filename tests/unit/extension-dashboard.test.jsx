@@ -1,6 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ChromeLocalRepository } from '@recruitment-tracker/core'
+import {
+  ChromeLocalRepository,
+  createApplication,
+  createCompanyRecord,
+} from '@recruitment-tracker/core'
 import { DashboardApp } from '../../apps/extension/src/dashboard/DashboardApp.jsx'
 import { describe, expect, it } from 'vitest'
 
@@ -113,5 +117,76 @@ describe('editable extension dashboard', () => {
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
+  })
+
+  it('quick switches and edits only one application workflow', async () => {
+    const user = userEvent.setup()
+    const repository = createRepository()
+    let next = 0
+    const idFactory = () => `domain-${++next}`
+    const targetCompany = createCompanyRecord(
+      { id: 'company-progress', companyName: '进度公司' },
+      { idFactory, now: new Date('2026-08-08T10:00:00.000Z') },
+    )
+    const options = {
+      idFactory,
+      now: new Date('2026-08-08T10:00:00.000Z'),
+      today: '2026-08-08',
+      companyIds: new Set([targetCompany.id]),
+    }
+    const first = createApplication(
+      { id: 'application-first', companyId: targetCompany.id },
+      options,
+    )
+    const second = createApplication(
+      { id: 'application-second', companyId: targetCompany.id },
+      options,
+    )
+    await repository.saveCompany(targetCompany)
+    await repository.saveApplication(first)
+    await repository.saveApplication(second)
+
+    render(<DashboardApp repository={repository} />)
+    await screen.findByText('电脑编辑模式')
+    await screen.findByText('进度公司')
+    await user.click(screen.getByRole('button', { name: '展开进度公司' }))
+    const firstCard = screen.getByText('投递记录 01').closest('.rt-application-card')
+    const quickSelect = within(firstCard).getByRole('combobox', {
+      name: /快速更新当前环节/u,
+    })
+    await user.selectOptions(quickSelect, first.progressStages[3].id)
+    await screen.findByText('进度已切换为“技术一面”')
+    await waitFor(async () => {
+      const saved = (await repository.getData()).applications.find(
+        (item) => item.id === first.id,
+      )
+      expect(saved).toMatchObject({
+        progressStatus: '技术一面',
+        progressPhase: 'interview',
+        progressUpdatedDate: '2026-08-08',
+      })
+      expect(saved.progressStages[3].date).toBe('2026-08-08')
+    })
+
+    await user.click(within(firstCard).getByRole('button', { name: '编辑进度' }))
+    await user.click(screen.getByRole('radio', { name: '设为当前环节：筛选' }))
+    await user.click(screen.getByRole('button', { name: '删除环节：筛选' }))
+    const saveButton = screen.getByRole('button', { name: '保存进度' })
+    expect(saveButton).toBeDisabled()
+    await user.click(screen.getByLabelText(/我确认已删除原当前环节/u))
+    await user.click(saveButton)
+    await screen.findByText('招聘进度流程已保存')
+
+    const data = await repository.getData()
+    const savedFirst = data.applications.find((item) => item.id === first.id)
+    const untouchedSecond = data.applications.find((item) => item.id === second.id)
+    expect(savedFirst.progressStages).toHaveLength(5)
+    expect(savedFirst).toMatchObject({
+      currentStageId: first.progressStages[2].id,
+      progressStatus: '笔试',
+      progressPhase: 'assessment',
+      progressIsTerminal: false,
+    })
+    expect(untouchedSecond).toEqual(second)
   })
 })
