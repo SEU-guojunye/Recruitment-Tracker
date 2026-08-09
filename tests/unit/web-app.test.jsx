@@ -106,6 +106,27 @@ describe('readonly WebApp', () => {
     expect(authService.signOut).toHaveBeenCalledOnce()
   })
 
+  it('filters recruitment companies by priority and industry without exposing edits', async () => {
+    const user = userEvent.setup()
+    render(<WebApp
+      authService={authenticatedAuth()}
+      snapshotReader={{ getSnapshot: vi.fn().mockResolvedValue(READONLY_SNAPSHOT) }}
+    />)
+    await screen.findByText('手机只读模式')
+    await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
+
+    expect(screen.getByText('极光科技')).toBeInTheDocument()
+    expect(screen.getByText('北辰智能')).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: '筛选优先度' }), 'P0')
+    expect(screen.getByText('极光科技')).toBeInTheDocument()
+    expect(screen.queryByText('北辰智能')).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: '筛选行业' }), '制造业')
+    expect(screen.getByRole('heading', { name: '暂无匹配数据' })).toBeInTheDocument()
+    for (const name of ['新增公司', '编辑', '删除', '投递']) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()
+    }
+  })
+
   it('returns to login when the snapshot reader reports an expired session', async () => {
     const error = new Error('session expired')
     error.code = 'UNAUTHENTICATED'

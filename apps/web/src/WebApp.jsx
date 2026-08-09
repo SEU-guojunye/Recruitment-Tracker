@@ -110,6 +110,8 @@ export function WebApp({ authService, snapshotReader }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState(APPLICATION_SCOPES.ACTIVE)
   const [phase, setPhase] = useState(null)
+  const [priority, setPriority] = useState(null)
+  const [industryType, setIndustryType] = useState(null)
   const [expandedCompanyIds, setExpandedCompanyIds] = useState(new Set())
 
   const loadSnapshot = useCallback(async () => {
@@ -271,6 +273,10 @@ export function WebApp({ authService, snapshotReader }) {
       onScopeChange={setScope}
       phase={phase}
       onPhaseChange={setPhase}
+      priority={priority}
+      onPriorityChange={setPriority}
+      industryType={industryType}
+      onIndustryTypeChange={setIndustryType}
       expandedCompanyIds={expandedCompanyIds}
       onToggleCompany={toggleCompany}
       lastSyncedAt={snapshot.value.updatedAt}

@@ -15,7 +15,7 @@
   - Preserve CSV, sync, capacity, CRUD, and two-step cascade deletion behavior.
   - _Requirements: R1, R6, R8_
 
-- [ ] 4. Integrate the read-only Web dashboard
+- [x] 4. Integrate the read-only Web dashboard
   - Pass recruitment filters through Web state and apply mobile responsive rules without mutation handlers.
   - Verify snapshot states and the read-only component boundary.
   - _Requirements: R3, R4, R5, R7_
