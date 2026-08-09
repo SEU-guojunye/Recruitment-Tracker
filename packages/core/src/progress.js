@@ -15,6 +15,7 @@ export function createDefaultProgressStages({
     id: `stage-${idFactory()}`,
     ...template,
     date: index === 0 ? appliedDate || '' : '',
+    note: '',
   }))
 }
 
@@ -45,7 +46,10 @@ export function replaceProgressWorkflow(
 
   return {
     ...application,
-    progressStages: progressStages.map((stage) => ({ ...stage })),
+    progressStages: progressStages.map((stage) => ({
+      ...stage,
+      note: stage.note === undefined ? '' : stage.note,
+    })),
     currentStageId,
     ...summary,
     progressUpdatedDate: localDate,

@@ -101,6 +101,7 @@ describe('core model normalization and creation', () => {
       '结果',
     ])
     expect(application.progressStages[0].date).toBe(TODAY)
+    expect(application.progressStages.every((stage) => stage.note === '')).toBe(true)
     expect(application).toMatchObject({
       appliedDate: TODAY,
       progressStatus: '已投递',
@@ -127,8 +128,8 @@ describe('core model normalization and creation', () => {
 describe('progress workflow rules', () => {
   it('requires unique stage ids, a valid current stage and a terminal closed phase', () => {
     const result = validateProgressStages([
-      { id: 'same', name: 'A', phase: 'submitted', isTerminal: false, date: '' },
-      { id: 'same', name: 'B', phase: 'closed', isTerminal: false, date: '' },
+      { id: 'same', name: 'A', phase: 'submitted', isTerminal: false, date: '', note: '' },
+      { id: 'same', name: 'B', phase: 'closed', isTerminal: false, date: '', note: '' },
     ], 'missing')
     expect(result.valid).toBe(false)
     expect(result.errors.map((error) => error.code)).toEqual(
@@ -165,6 +166,37 @@ describe('progress workflow rules', () => {
     })
     expect(changed.progressStatus).toBe('业务终面')
     expect(changed.progressPhase).toBe('interview')
+  })
+
+  it('validates stage note type and length while preserving notes through workflow changes', () => {
+    const company = makeCompany()
+    const application = makeApplication(company)
+    const stages = application.progressStages.map((stage, index) => ({
+      ...stage,
+      note: index === 3 ? '会议：https://meeting.example.com/round-1' : '',
+    }))
+    const changed = replaceProgressWorkflow(application, {
+      progressStages: stages,
+      currentStageId: stages[3].id,
+      localDate: TODAY,
+    })
+    expect(changed.progressStages[3].note).toBe('会议：https://meeting.example.com/round-1')
+
+    const invalidType = validateProgressStages([
+      { ...stages[0], note: null },
+    ], stages[0].id)
+    expect(invalidType.errors).toContainEqual(expect.objectContaining({
+      path: 'progressStages.0.note',
+      code: 'invalid_type',
+    }))
+
+    const tooLong = validateProgressStages([
+      { ...stages[0], note: '备'.repeat(5001) },
+    ], stages[0].id)
+    expect(tooLong.errors).toContainEqual(expect.objectContaining({
+      path: 'progressStages.0.note',
+      code: 'too_long',
+    }))
   })
 
   it('derives timeline display state from order, never from dates', () => {

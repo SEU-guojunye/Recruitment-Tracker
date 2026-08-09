@@ -430,6 +430,7 @@ CloudBase 同步失败不得阻止本地保存成功。
 - 标记该环节是否为终态。
 - 调整环节顺序。
 - 为每个环节填写或修改日期。
+- 为每个环节填写或修改备注、面试链接或准备事项。
 - 指定当前环节。
 - 保存或取消修改。
 
@@ -576,7 +577,7 @@ CSV 使用单文件混合记录格式，表头固定为：
 | `isReferral` | `application` | 必填；是否内推，只接受 `true` 或 `false` |
 | `referralCode` | `application` | 内推码，可为空 |
 | `applicationNotes` | `application` | 投递备注，可为空 |
-| `progressStages` | `application` | 完整进度环节数组的 JSON 字符串，保留环节 ID、名称、阶段、终态、日期和数组顺序；外部导入时允许留空 |
+| `progressStages` | `application` | 完整进度环节数组的 JSON 字符串，保留环节 ID、名称、阶段、终态、日期、备注和数组顺序；外部导入时允许留空 |
 | `currentStageId` | `application` | `progressStages` 非空时必填，且必须指向其中一个环节 |
 | `applicationCreatedAt` | `application` | 投递创建时间，ISO 8601 UTC 字符串；外部导入时允许留空 |
 | `applicationUpdatedAt` | `application` | 投递更新时间，ISO 8601 UTC 字符串；外部导入时允许留空 |
@@ -600,8 +601,8 @@ CSV 使用单文件混合记录格式，表头固定为：
 - 已有 ID 采用完整记录覆盖语义：CSV 中可选字段为空表示清空该字段，不表示保留旧值；导入预览必须展示将被更新的记录数。
 - 同一文件出现重复 ID、相同 ID 对应不同公司名称、投递行 `companyId` 与公司行矛盾、ID 对应名称与本地记录冲突，或已有 `applicationId` 被关联到不同公司时必须报错，不能按最后一行静默覆盖或无提示移动投递。
 - 多条没有 `applicationId` 的投递行必须创建为多条独立投递，不得按公司名称合并为一条。
-- `progressStages` 非空时必须是合法 JSON 数组，且至少包含一个环节；每个环节必须包含合法阶段和终态标记；`currentStageId` 必须指向其中一个环节，`progressStatus`、`progressPhase` 和 `progressIsTerminal` 以当前环节为准。
-- `progressStages` 为空时，系统使用 `progressStatus`、`progressPhase`、`progressIsTerminal` 和 `progressUpdatedDate` 创建一个当前环节；用户后续可以在进度编辑器中扩展流程。
+- `progressStages` 非空时必须是合法 JSON 数组，且至少包含一个环节；每个环节必须包含合法阶段和终态标记，`note` 缺失时按旧数据兼容为空字符串，非字符串或超过 5000 个字符时拒绝导入；`currentStageId` 必须指向其中一个环节，`progressStatus`、`progressPhase` 和 `progressIsTerminal` 以当前环节为准。
+- `progressStages` 为空时，系统使用 `progressStatus`、`progressPhase`、`progressIsTerminal` 和 `progressUpdatedDate` 创建一个当前环节，节点备注默认为空；用户后续可以在进度编辑器中扩展流程。
 - ID 为空时由系统生成；创建时间或更新时间为空时使用导入提交时的当前时间。
 - 导出到表格的文本字段如果以 `=`、`+`、`-`、`@`、制表符、回车或换行开头，在内容前增加一个单引号作为转义；原文本如果以单引号开头则再增加一个单引号。导入当前 `schemaVersion` 时按相反规则只移除一层由本产品增加的前缀，保证本产品 CSV 往返后原始文本不变且表格软件不执行公式。
 - 导入前按导入后的完整数据计算序列化字节数，预计超过 8 MiB 时拒绝提交。
@@ -683,12 +684,12 @@ CSV 使用单文件混合记录格式，表头固定为：
   isReferral: true,
   referralCode: "REF-2026",
   progressStages: [
-    { id: "stage-1", name: "已投递", phase: "submitted", isTerminal: false, date: "2026-08-08" },
-    { id: "stage-2", name: "筛选", phase: "screening", isTerminal: false, date: "" },
-    { id: "stage-3", name: "笔试", phase: "assessment", isTerminal: false, date: "" },
-    { id: "stage-4", name: "技术一面", phase: "interview", isTerminal: false, date: "" },
-    { id: "stage-5", name: "HR 面", phase: "interview", isTerminal: false, date: "" },
-    { id: "stage-6", name: "结果", phase: "result", isTerminal: false, date: "" }
+    { id: "stage-1", name: "已投递", phase: "submitted", isTerminal: false, date: "2026-08-08", note: "" },
+    { id: "stage-2", name: "筛选", phase: "screening", isTerminal: false, date: "", note: "" },
+    { id: "stage-3", name: "笔试", phase: "assessment", isTerminal: false, date: "", note: "" },
+    { id: "stage-4", name: "技术一面", phase: "interview", isTerminal: false, date: "", note: "面试会议：https://meeting.example.com/round-1" },
+    { id: "stage-5", name: "HR 面", phase: "interview", isTerminal: false, date: "", note: "" },
+    { id: "stage-6", name: "结果", phase: "result", isTerminal: false, date: "", note: "" }
   ],
   currentStageId: "stage-1",
   applicationNotes: "",
@@ -706,7 +707,7 @@ CSV 使用单文件混合记录格式，表头固定为：
 - `jobTitle` 可为空，最多 200 个字符；它是用户维护的展示字段，不由解析器推断。
 - `progressStages` 按用户定义的顺序保存。
 - `currentStageId` 指向当前环节。
-- 每个环节可以有独立日期，允许为空。
+- 每个环节可以有独立日期和 `note` 备注，均允许为空；`note` 最多 5000 个字符，可包含换行和 HTTP/HTTPS 面试链接。
 - 同一条投递内的环节 ID 必须唯一。
 - 每个环节必须包含 `phase` 和 `isTerminal`；环节显示名称允许自定义。
 - 保存流程编辑或快速切换时同步更新 `progressStatus`、`progressPhase`、`progressIsTerminal` 和 `progressUpdatedDate`。

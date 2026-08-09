@@ -36,6 +36,18 @@ describe('validateCloudSnapshot', () => {
     })))
   })
 
+  it('applies empty note defaults when legacy snapshots omit progress stage notes', () => {
+    const legacySnapshot = structuredClone(READONLY_SNAPSHOT)
+    for (const application of legacySnapshot.data.applications) {
+      for (const stage of application.progressStages) delete stage.note
+    }
+
+    const result = validateCloudSnapshot(legacySnapshot, { today: '2026-08-08' })
+    expect(result.data.applications.every((application) => (
+      application.progressStages.every((stage) => stage.note === '')
+    ))).toBe(true)
+  })
+
   it('distinguishes unsupported schema versions from malformed snapshots', () => {
     expect(() => validateCloudSnapshot({ ...READONLY_SNAPSHOT, schemaVersion: 99 }))
       .toThrow(UnsupportedSchemaVersionError)

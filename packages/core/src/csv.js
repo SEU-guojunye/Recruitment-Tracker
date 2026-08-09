@@ -623,6 +623,7 @@ export class CsvImportExportService {
             phase: values.progressPhase,
             isTerminal: progressIsTerminal,
             date: values.progressUpdatedDate,
+            note: '',
           }]
         }
 

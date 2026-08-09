@@ -117,6 +117,24 @@ describe('ChromeLocalRepository envelope and atomicity', () => {
     expect(storageArea.values[key].data.companies[0]).not.toHaveProperty('industryType')
   })
 
+  it('reads legacy progress stages without notes and does not rewrite storage', async () => {
+    const key = 'recruitmentTrackerEnvelope'
+    const legacyCompany = company({ id: 'company-legacy-progress' })
+    const legacyApplication = application(legacyCompany, { id: 'application-legacy-progress' })
+    for (const stage of legacyApplication.progressStages) delete stage.note
+    const envelope = createDefaultEnvelope({ idFactory: sequence('legacy-progress-device') })
+    envelope.data.companies.push(legacyCompany)
+    envelope.data.applications.push(legacyApplication)
+    const storageArea = new FakeStorageArea({ [key]: envelope })
+    const repository = createRepository({ storageArea })
+
+    const data = await repository.getData()
+    expect(data.applications[0].progressStages.every((stage) => stage.note === '')).toBe(true)
+    expect(storageArea.setCalls).toBe(0)
+    expect(storageArea.values[key].data.applications[0].progressStages[0])
+      .not.toHaveProperty('note')
+  })
+
   it('increments revision and dirty state for business writes only', async () => {
     const repository = createRepository()
     await repository.setActiveTab('recruitment')

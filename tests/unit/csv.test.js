@@ -68,9 +68,9 @@ function createFixture() {
     updatedAt: '2026-08-04T01:02:03.000Z',
   }, { idFactory, now: NOW })
   const stages = [
-    { id: 'stage-apply', name: '已投递', phase: 'submitted', isTerminal: false, date: '2026-08-01' },
-    { id: 'stage-custom', name: '交叉面试', phase: 'interview', isTerminal: false, date: '2026-08-06' },
-    { id: 'stage-offer', name: 'Offer', phase: 'result', isTerminal: true, date: '' },
+    { id: 'stage-apply', name: '已投递', phase: 'submitted', isTerminal: false, date: '2026-08-01', note: '' },
+    { id: 'stage-custom', name: '交叉面试', phase: 'interview', isTerminal: false, date: '2026-08-06', note: '会议：https://meeting.example.com/cross\n准备系统设计' },
+    { id: 'stage-offer', name: 'Offer', phase: 'result', isTerminal: true, date: '', note: '' },
   ]
   const options = {
     idFactory,

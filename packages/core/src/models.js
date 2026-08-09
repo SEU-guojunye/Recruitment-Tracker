@@ -62,7 +62,11 @@ export function createApplication(
   const timestamp = toIso(now)
   const appliedDate = input.appliedDate || today
   const progressStages = input.progressStages
-    ? input.progressStages.map((stage) => ({ ...stage, name: stage.name.trim() }))
+    ? input.progressStages.map((stage) => ({
+        ...stage,
+        name: stage.name.trim(),
+        note: stage.note === undefined ? '' : stage.note,
+      }))
     : createDefaultProgressStages({ appliedDate, idFactory })
   const currentStageId = input.currentStageId || progressStages[0]?.id
   const summary = deriveProgressSummary(progressStages, currentStageId) || {}

@@ -153,6 +153,9 @@ export function validateProgressStages(stages, currentStageId) {
     if (stage.date !== '' && !isLocalDate(stage.date)) {
       addError(errors, `${prefix}.date`, 'invalid_date', '环节日期必须是 YYYY-MM-DD 或空字符串')
     }
+    validateText(errors, stage.note, `${prefix}.note`, {
+      max: FIELD_LIMITS.notes,
+    })
   })
 
   if (typeof currentStageId !== 'string' || !stageIds.has(currentStageId)) {

@@ -1,11 +1,11 @@
-function stages(prefix, dates = {}) {
+function stages(prefix, dates = {}, notes = {}) {
   return [
-    { id: `${prefix}-submitted`, name: '已投递', phase: 'submitted', isTerminal: false, date: dates.submitted || '' },
-    { id: `${prefix}-screening`, name: '筛选', phase: 'screening', isTerminal: false, date: dates.screening || '' },
-    { id: `${prefix}-assessment`, name: '笔试', phase: 'assessment', isTerminal: false, date: dates.assessment || '' },
-    { id: `${prefix}-tech`, name: '技术一面', phase: 'interview', isTerminal: false, date: dates.tech || '' },
-    { id: `${prefix}-hr`, name: 'HR 面', phase: 'interview', isTerminal: false, date: dates.hr || '' },
-    { id: `${prefix}-result`, name: '结果', phase: 'result', isTerminal: false, date: dates.result || '' },
+    { id: `${prefix}-submitted`, name: '已投递', phase: 'submitted', isTerminal: false, date: dates.submitted || '', note: notes.submitted || '' },
+    { id: `${prefix}-screening`, name: '筛选', phase: 'screening', isTerminal: false, date: dates.screening || '', note: notes.screening || '' },
+    { id: `${prefix}-assessment`, name: '笔试', phase: 'assessment', isTerminal: false, date: dates.assessment || '', note: notes.assessment || '' },
+    { id: `${prefix}-tech`, name: '技术一面', phase: 'interview', isTerminal: false, date: dates.tech || '', note: notes.tech || '' },
+    { id: `${prefix}-hr`, name: 'HR 面', phase: 'interview', isTerminal: false, date: dates.hr || '', note: notes.hr || '' },
+    { id: `${prefix}-result`, name: '结果', phase: 'result', isTerminal: false, date: dates.result || '', note: notes.result || '' },
   ]
 }
 
@@ -14,6 +14,8 @@ const applicationAStages = stages('a', {
   screening: '2026-08-03',
   assessment: '2026-08-05',
   tech: '2026-08-08',
+}, {
+  tech: '技术面试反馈良好\n会议：https://meeting.example.com/tech-round',
 })
 const applicationBStages = stages('b', { submitted: '2026-08-07' })
 

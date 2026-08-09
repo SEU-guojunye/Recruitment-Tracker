@@ -16,11 +16,34 @@ function applyCompanyDefaults(company) {
   }
 }
 
+function applyProgressStageDefaults(stage) {
+  if (!stage || typeof stage !== 'object' || Array.isArray(stage)) return stage
+  return {
+    ...stage,
+    note: stage.note === undefined ? '' : stage.note,
+  }
+}
+
+function applyApplicationDefaults(application) {
+  if (!application || typeof application !== 'object' || Array.isArray(application)) {
+    return application
+  }
+  return {
+    ...application,
+    progressStages: Array.isArray(application.progressStages)
+      ? application.progressStages.map(applyProgressStageDefaults)
+      : application.progressStages,
+  }
+}
+
 export function applyDatasetCompatibilityDefaults(dataset) {
   if (!dataset || typeof dataset !== 'object' || Array.isArray(dataset)) return dataset
   if (!Array.isArray(dataset.companies)) return dataset
   return {
     ...dataset,
     companies: dataset.companies.map(applyCompanyDefaults),
+    applications: Array.isArray(dataset.applications)
+      ? dataset.applications.map(applyApplicationDefaults)
+      : dataset.applications,
   }
 }
