@@ -2,7 +2,7 @@
 
 > 版本：v1.6
 >
-> 状态：v1.6 数据模型、TDesign Dashboard、扩展编辑端与只读 Web 已完成本地验收 / 待重新部署
+> 状态：v1.6 数据模型、TDesign Dashboard、扩展编辑端与只读 Web 已完成验收并部署到 CloudBase
 >
 > 开发语言：JavaScript ES2022+ / JSX
 >

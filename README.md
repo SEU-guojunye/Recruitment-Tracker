@@ -50,3 +50,14 @@ npm run test:e2e
 - 云端只保留最近一次完整只读快照，不提供双向合并或历史恢复。
 
 完整验收结果见 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)。
+
+## 当前 CloudBase Web 部署
+
+- 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
+- 应用：`recruitment-tracker`
+- 版本：`recruitment-tracker-004`
+- Build ID：`2601576522`
+- 地址：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
+- 状态：`SUCCESS`（2026-08-09 发布）
+
+该地址同时提供只读 Web Dashboard 与 `/extension-bridge.html`。浏览器扩展仍需单独构建和安装，不属于 CloudBase Web 发布产物。

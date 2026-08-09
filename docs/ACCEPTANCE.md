@@ -1,6 +1,6 @@
 # Recruitment Tracker PRD v1.6 本地验收记录
 
-验收日期：2026-08-09。验收基准：`PRD.md` v1.6 与 `dashboard-tdesign.html`；使用范围：个人单账号、单编辑设备。本次只完成代码与本地验收，未重新部署或制作发布包。
+验收日期：2026-08-09。验收基准：`PRD.md` v1.6 与 `dashboard-tdesign.html`；使用范围：个人单账号、单编辑设备。代码验收完成后已重新部署只读 Web 与扩展桥接页，浏览器扩展发布包未重新制作。
 
 ## 产品闭环
 
@@ -57,6 +57,16 @@
 - Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com`
 - Web Version：`recruitment-tracker-003`
 - Web Build ID：`2601563472`（`SUCCESS`）
+
+## 当前 v1.6 CloudBase Web 部署
+
+- CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
+- Web Service：`recruitment-tracker`
+- Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
+- Web Version：`recruitment-tracker-004`
+- Web Build ID：`2601576522`（`SUCCESS`）
+- 首页与 `/extension-bridge.html` 均返回 HTTP 200，并引用本次构建的新资源哈希。
+- 静态托管首页与错误页均配置为 `index.html`。
 
 ## 历史 v0.1.2 线上发布验证
 
