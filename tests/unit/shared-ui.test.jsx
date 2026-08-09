@@ -101,13 +101,13 @@ describe('shared readonly dashboard UI', () => {
 
   it('tries multiple external icon APIs and keeps a one-character themed fallback', () => {
     expect(getCompanyIconUrls(company.recruitmentLink, { brandfetchClientId: 'public-client-id' })).toEqual([
-      'https://cdn.brandfetch.io/example.com/w/128/h/128/fallback/404/type/icon.png?c=public-client-id',
-      'https://logo.tomba.io/example.com',
       'https://ico.faviconkit.net/favicon/example.com?sz=128',
+      'https://logo.tomba.io/example.com',
+      'https://cdn.brandfetch.io/example.com/w/128/h/128/fallback/404/type/icon.png?c=public-client-id',
     ])
     expect(getCompanyIconUrls(company.recruitmentLink)).toEqual([
-      'https://logo.tomba.io/example.com',
       'https://ico.faviconkit.net/favicon/example.com?sz=128',
+      'https://logo.tomba.io/example.com',
     ])
     expect(getCompanyIconUrl(company.recruitmentLink))
       .toBe('https://ico.faviconkit.net/favicon/example.com?sz=128')
@@ -116,14 +116,14 @@ describe('shared readonly dashboard UI', () => {
     const { container, unmount } = render(<CompanyLogo company={company} />)
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      'https://logo.tomba.io/example.com',
+      'https://ico.faviconkit.net/favicon/example.com?sz=128',
     )
     expect(container).toHaveTextContent('极')
     expect(container).not.toHaveTextContent('极光')
     fireEvent.load(container.querySelector('img'))
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      'https://ico.faviconkit.net/favicon/example.com?sz=128',
+      'https://logo.tomba.io/example.com',
     )
     expect(container.querySelector('.rt-company-logo')).not.toHaveClass('is-loaded')
     fireEvent.error(container.querySelector('img'))

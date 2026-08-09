@@ -30,7 +30,7 @@
   - _Requirements: R5_
 
 - [x] 5. 实现企业图标多源逐级解析
-  - 依次尝试 Brandfetch（配置公开客户端 ID 时）、Tomba 和 FaviconKit 128px API。
+  - 依次尝试 FaviconKit、Tomba 和 Brandfetch（配置公开客户端 ID 时）API。
   - 来源失败或图片无效时自动推进，全部失败后使用首字回退。
   - 覆盖 URL 生成、来源切换、成功停止和全部失败状态。
   - _Requirements: R5, R6_

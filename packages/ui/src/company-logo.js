@@ -24,17 +24,15 @@ export function getCompanyIconUrls(recruitmentLink, options = {}) {
     : configuredBrandfetchClientId
   const urls = []
   if (brandfetchClientId) {
-    urls.push(
-      `https://cdn.brandfetch.io/${encodedDomain}/w/128/h/128/fallback/404/type/icon.png?c=${encodeURIComponent(brandfetchClientId)}`,
-    )
+    urls.push(`https://cdn.brandfetch.io/${encodedDomain}/w/128/h/128/fallback/404/type/icon.png?c=${encodeURIComponent(brandfetchClientId)}`)
   }
-  urls.push(
-    `https://logo.tomba.io/${encodedDomain}`,
+  return [
     `https://ico.faviconkit.net/favicon/${encodedDomain}?sz=128`,
-  )
-  return urls
+    `https://logo.tomba.io/${encodedDomain}`,
+    ...urls,
+  ]
 }
 
 export function getCompanyIconUrl(recruitmentLink) {
-  return getCompanyIconUrls(recruitmentLink).at(-1) || ''
+  return getCompanyIconUrls(recruitmentLink)[0] || ''
 }

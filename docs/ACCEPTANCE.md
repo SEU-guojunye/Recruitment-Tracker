@@ -22,7 +22,7 @@
 - [x] 账号错配和设备冲突不会静默覆盖；清空重绑或接管前必须导出并再次确认。
 - [x] 扩展不包含 CloudBase Web SDK、高权限密钥、远程脚本或通配 API Host 权限。
 - [x] 生产桥接校验固定扩展 Origin、父窗口、消息来源、channel、requestId 和超时。
-- [x] 公司图标由招聘链接的 hostname 在渲染时派生，按 Brandfetch（可选）、Tomba、FaviconKit 顺序发送 hostname；不存储图标 URL、二进制或独立域名字段，失败时保留首字回退。
+- [x] 公司图标由招聘链接的 hostname 在渲染时派生，按 FaviconKit、Tomba、Brandfetch（可选）顺序发送 hostname；不存储图标 URL、二进制或独立域名字段，失败时保留首字回退。
 
 ## 只读与响应式
 
