@@ -63,10 +63,12 @@
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - Web Service：`recruitment-tracker`
 - Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
-- Web Version：`recruitment-tracker-004`
-- Web Build ID：`2601576522`（`SUCCESS`）
+- Web Version：`recruitment-tracker-005`
+- Web Build ID：`2601576629`（`SUCCESS`）
 - 首页与 `/extension-bridge.html` 均返回 HTTP 200，并引用本次构建的新资源哈希。
 - 静态托管首页与错误页均配置为 `index.html`。
+- 已登录线上会话成功读取迁移后的快照；招聘信息页正常显示默认行业、招聘批次和优先度，控制台无错误。
+- `user_snapshots` 的 v1.6 字段迁移和备份信息见 [MIGRATIONS.md](MIGRATIONS.md)。
 
 ## 历史 v0.1.2 线上发布验证
 
@@ -79,7 +81,7 @@
 ## 自动化结果
 
 - ESLint：通过。
-- Vitest：14 个测试文件、88 个测试通过。
+- Vitest：14 个测试文件、90 个测试通过。
 - 生产构建：Web 与 Extension 均通过；仅有 CloudBase SDK 共享 chunk 大小提示，无功能或安全错误。
 - Playwright：9 个 Chromium E2E 通过；1 个需要临时 QA 凭据的真实 CloudBase 账号测试按设计跳过。
 - 浏览器手工复核：390 × 844 登录页无横向溢出，TDesign 移动布局正确铺满，控制台无应用错误或警告。

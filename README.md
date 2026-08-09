@@ -55,9 +55,11 @@ npm run test:e2e
 
 - 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - 应用：`recruitment-tracker`
-- 版本：`recruitment-tracker-004`
-- Build ID：`2601576522`
+- 版本：`recruitment-tracker-005`
+- Build ID：`2601576629`
 - 地址：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
 - 状态：`SUCCESS`（2026-08-09 发布）
 
 该地址同时提供只读 Web Dashboard 与 `/extension-bridge.html`。浏览器扩展仍需单独构建和安装，不属于 CloudBase Web 发布产物。
+
+v1.6 旧快照兼容迁移记录见 [docs/MIGRATIONS.md](docs/MIGRATIONS.md)。
