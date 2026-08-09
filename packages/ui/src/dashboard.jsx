@@ -129,9 +129,9 @@ export function CompanyLogo({ company }) {
         <img
           src={iconUrl}
           alt=""
-          width="64"
-          height="64"
-          loading="lazy"
+          width="128"
+          height="128"
+          loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
           onLoad={(event) => {
@@ -210,7 +210,7 @@ function ApplicationCard({
   const jobTitle = typeof application.jobTitle === 'string' ? application.jobTitle.trim() : ''
   return (
     <article className="rt-application-card">
-      <div className="rt-application-info-grid">
+      <div className={`rt-application-info-grid ${mode === 'editable' ? 'is-editable' : 'is-readonly'}`}>
         <div className="rt-application-cell rt-application-cell--title">
           <span>投递岗位名称</span>
           <strong title={jobTitle || recordLabel}>{jobTitle || recordLabel}</strong>
@@ -231,10 +231,13 @@ function ApplicationCard({
           <span>最新更新日期</span>
           <strong>{formatDateOnly(application.updatedAt)}</strong>
         </div>
+        {mode === 'editable' && renderActions ? (
+          <div className="rt-application-cell rt-application-cell--actions">
+            <span>操作</span>
+            <div className="rt-row-actions">{renderActions(application)}</div>
+          </div>
+        ) : null}
       </div>
-      {mode === 'editable' && renderActions ? (
-        <div className="rt-application-actions">{renderActions(application)}</div>
-      ) : null}
       <ProgressTimeline
         application={application}
         action={mode === 'editable' && renderProgressAction
@@ -255,9 +258,10 @@ function ApplicationCompanyList({
   renderProgressAction,
 }) {
   return (
-    <div className="rt-company-list">
+    <div className={`rt-company-list ${mode === 'editable' ? 'is-editable' : 'is-readonly'}`}>
       <div className="rt-company-list__head" aria-hidden="true">
-        <span /><span>公司</span><span>投递链接</span><span>投递岗位数</span><span>已投递岗位</span><span>操作</span>
+        <span /><span>公司</span><span>投递链接</span><span>投递岗位数</span><span>已投递岗位</span>
+        {mode === 'editable' ? <span>操作</span> : null}
       </div>
       {rows.map((row) => {
         const expanded = expandedCompanyIds.has(row.company.id)
@@ -293,7 +297,7 @@ function ApplicationCompanyList({
               </div>
               {mode === 'editable' && renderCompanyActions ? (
                 <div className="rt-row-actions">{renderCompanyActions(row.company)}</div>
-              ) : <span />}
+              ) : null}
             </div>
             {expanded ? (
               <div className="rt-company-card__details" id={panelId}>
@@ -327,10 +331,11 @@ function RecruitmentCompanyList({ rows, mode, renderCompanyActions, renderCompan
       : <span className="rt-recruitment-value">{value}</span>
   }
   return (
-    <div className="rt-recruitment-list">
+    <div className={`rt-recruitment-list ${mode === 'editable' ? 'is-editable' : 'is-readonly'}`}>
       <div className="rt-recruitment-list__head" aria-hidden="true">
         <span>公司</span><span>行业类型</span><span>招聘批次</span><span>优先度</span>
-        <span>招聘链接</span><span>投递岗位数</span><span>最近更新</span><span>操作</span>
+        <span>招聘链接</span><span>投递岗位数</span><span>最近更新</span>
+        {mode === 'editable' ? <span>操作</span> : null}
       </div>
       {rows.map((row) => (
         <article className="rt-recruitment-row" key={row.company.id}>
@@ -348,7 +353,7 @@ function RecruitmentCompanyList({ rows, mode, renderCompanyActions, renderCompan
           <div className="rt-recruitment-cell rt-tabular" data-label="最近更新">{formatDateOnly(row.latestUpdatedAt)}</div>
           {mode === 'editable' && renderCompanyActions ? (
             <div className="rt-row-actions">{renderCompanyActions(row.company)}</div>
-          ) : <span />}
+          ) : null}
         </article>
       ))}
     </div>

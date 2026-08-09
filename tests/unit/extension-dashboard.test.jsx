@@ -197,7 +197,7 @@ describe('editable extension dashboard', () => {
     expect(trigger).toHaveFocus()
   })
 
-  it('quick switches and edits only one application workflow', async () => {
+  it('keeps application actions in the detail row and edits only one workflow', async () => {
     const user = userEvent.setup()
     const repository = createRepository()
     let next = 0
@@ -229,22 +229,11 @@ describe('editable extension dashboard', () => {
     await screen.findByText('进度公司')
     await user.click(screen.getByRole('button', { name: '展开进度公司' }))
     const firstCard = screen.getByText('投递记录 01').closest('.rt-application-card')
-    const quickSelect = within(firstCard).getByRole('combobox', {
-      name: /快速更新当前环节/u,
-    })
-    await user.selectOptions(quickSelect, first.progressStages[3].id)
-    await screen.findByText('进度已切换为“技术一面”')
-    await waitFor(async () => {
-      const saved = (await repository.getData()).applications.find(
-        (item) => item.id === first.id,
-      )
-      expect(saved).toMatchObject({
-        progressStatus: '技术一面',
-        progressPhase: 'interview',
-        progressUpdatedDate: '2026-08-09',
-      })
-      expect(saved.progressStages[3].date).toBe('2026-08-09')
-    })
+    expect(within(firstCard).queryByRole('combobox', { name: /快速更新当前环节/u }))
+      .not.toBeInTheDocument()
+    const actionCell = within(firstCard).getByText('操作').closest('.rt-application-cell--actions')
+    expect(within(actionCell).getByRole('button', { name: '编辑投递' })).toBeInTheDocument()
+    expect(within(actionCell).getByRole('button', { name: '删除' })).toBeInTheDocument()
 
     await user.click(within(firstCard).getByRole('button', { name: '编辑进度' }))
     await user.click(screen.getByRole('radio', { name: '设为当前环节：筛选' }))

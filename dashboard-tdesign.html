@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Recruitment Tracker · TDesign inspired dashboard prototype" />
   <title>Recruitment Tracker · TDesign Prototype</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://ico.faviconkit.net" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="./node_modules/@fontsource-variable/noto-sans-sc/index.css" rel="stylesheet" />
   <style>
     :root {
       /* TDesign-inspired semantic tokens. Brand blue follows TDesign's default #0052D9 theme. */
@@ -57,7 +55,7 @@
       margin: 0;
       color: var(--td-text-primary);
       background: var(--td-bg-page);
-      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: "Noto Sans SC Variable", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
       font-size: 15px;
       line-height: 1.6;
     }
@@ -156,8 +154,8 @@
     .toolbar-count { color: var(--td-text-secondary); font-size: 12px; white-space: nowrap; }
     .toolbar-count strong { color: var(--td-text-primary); font-weight: 600; }
 
-    .company-list { --company-summary-columns: 32px minmax(190px, 1.25fr) minmax(116px, .6fr) minmax(82px, .55fr) minmax(250px, 1.6fr) 88px; display: grid; gap: 8px; padding: 14px 20px 20px; }
-    .company-list-head { display: grid; grid-template-columns: var(--company-summary-columns); align-items: center; gap: 12px; min-height: 42px; padding: 8px 15px; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 500; }
+    .company-list { --company-summary-columns: 32px minmax(190px, 1.25fr) minmax(120px, .72fr) 86px minmax(280px, 1.9fr) 72px; display: grid; gap: 8px; padding: 14px 20px 20px; }
+    .company-list-head { display: grid; grid-template-columns: var(--company-summary-columns); align-items: center; gap: 12px; min-height: 42px; padding: 8px 15px; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 600; }
     .company-list-head > span { min-width: 0; }
     .company-list-head > span:nth-child(2), .company-list-head > span:nth-child(3), .company-list-head > span:nth-child(4), .company-list-head > span:nth-child(5) { display: flex; align-items: center; color: inherit; font-weight: inherit; }
     .company-list-head > span:nth-child(4) { justify-content: center; text-align: center; }
@@ -214,10 +212,12 @@
     .applications { display: grid; }
     .application { padding: 20px 0 22px; border-top: 1px solid var(--td-border); background: transparent; font-size: 13px; }
     .application:first-child { border-top: 0; }
-    .application-info-grid { display: grid; grid-template-columns: minmax(180px, 1.25fr) repeat(4, minmax(120px, 1fr)); align-items: end; gap: 18px; }
+    .application-info-grid { display: grid; grid-template-columns: minmax(190px, 1.45fr) minmax(100px, .72fr) minmax(116px, .85fr) minmax(92px, .65fr) minmax(110px, .72fr) minmax(112px, .72fr); align-items: end; gap: 18px; }
     .application-cell { min-width: 0; text-align: left; }
-    .application .application-column-label { display: block; margin-bottom: 10px; color: var(--td-text-secondary); font-size: 13px; }
+    .application .application-column-label { display: block; margin-bottom: 10px; color: var(--td-text-secondary); font-size: 13px; font-weight: 600; }
     .application-title { display: block; overflow: hidden; color: var(--td-brand-color-6); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .application-cell--actions { display: grid; justify-items: end; }
+    .application-cell--actions .application-column-label { width: 100%; text-align: right; }
     .application-value { display: block; overflow: hidden; color: var(--td-text-primary); font-size: 13px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .application-link { display: inline-flex; align-items: center; gap: 3px; color: var(--td-brand-color-6); font-size: 13px; text-decoration: none; white-space: nowrap; }
     .application-link:hover { text-decoration: underline; }
@@ -240,10 +240,10 @@
     .timeline-step.is-current .timeline-label { color: var(--td-brand-color-6); font-weight: 500; }
 
     .recruitment-list { padding: 14px 20px 20px; }
-    .recruitment-table { --recruitment-columns: minmax(148px, 1.55fr) minmax(72px, .8fr) minmax(90px, 1.05fr) minmax(48px, .48fr) minmax(72px, .78fr) minmax(56px, .58fr) minmax(76px, .8fr) minmax(84px, .88fr); overflow: hidden; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); }
+    .recruitment-table { --recruitment-columns: minmax(170px, 1.35fr) minmax(84px, .75fr) minmax(100px, .9fr) 58px minmax(92px, .78fr) 82px 96px 126px; overflow: hidden; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); }
     .recruitment-row { display: grid; grid-template-columns: var(--recruitment-columns); align-items: center; gap: 12px; min-height: 64px; padding: 9px 14px; border-bottom: 1px solid var(--td-border); color: var(--td-text-primary); background: var(--td-bg-container); font-size: 13px; text-align: left; transition: background-color 160ms var(--ease); }
     .recruitment-row:last-child { border-bottom: 0; }
-    .recruitment-row--head { min-height: 42px; color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 500; }
+    .recruitment-row--head { min-height: 42px; color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 600; }
     .recruitment-row:not(.recruitment-row--head):hover { background: var(--td-bg-container-hover); }
     .recruitment-row > * { width: 100%; min-width: 0; justify-self: stretch; text-align: center; }
     .recruitment-row > :first-child { text-align: left; }
@@ -256,7 +256,7 @@
     .recruitment-cell { display: grid; justify-items: center; gap: 4px; min-width: 0; }
     .recruitment-cell--link { justify-items: start; text-align: left; }
     .recruitment-row .field-value, .count { color: var(--td-text-primary); font-size: 13px; font-weight: 400; line-height: 20px; font-variant-numeric: tabular-nums; }
-    .mobile-label { display: none; color: var(--td-text-placeholder); font-size: 13px; }
+    .mobile-label { display: none; color: var(--td-text-placeholder); font-size: 13px; font-weight: 600; }
     .recruitment-link { display: inline-flex; align-items: center; gap: 4px; color: var(--td-brand-color-6); font-size: 13px; font-weight: 400; line-height: 20px; text-decoration: none; white-space: nowrap; }
     .recruitment-link .icon { width: 12px; height: 12px; }
     .recruitment-link:hover { color: var(--td-brand-color-8); text-decoration: underline; }
@@ -277,9 +277,9 @@
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
     @media (max-width: 1120px) {
-      .company-list { --company-summary-columns: 32px minmax(150px, 1.15fr) minmax(104px, .65fr) minmax(70px, .55fr) minmax(180px, 1.45fr) 76px; }
+      .company-list { --company-summary-columns: 32px minmax(160px, 1.2fr) 108px 76px minmax(220px, 1.55fr) 68px; }
       .company-list-head, .company-head { gap: 8px; }
-      .application-info-grid { grid-template-columns: minmax(150px, 1.25fr) repeat(4, minmax(100px, 1fr)); gap: 14px; }
+      .application-info-grid { grid-template-columns: minmax(160px, 1.35fr) minmax(92px, .75fr) minmax(100px, .8fr) 84px 100px 108px; gap: 14px; }
       .recruitment-row { gap: 8px; }
       .recruitment-row > .actions { gap: 4px; }
       .recruitment-row .table-action { padding-right: 2px; padding-left: 2px; }
@@ -355,6 +355,8 @@
       .application { padding: 12px; }
       .application + .application { margin-top: 4px; }
       .application-info-grid { gap: 14px 10px; }
+      .application-cell--actions { grid-column: 1 / -1; justify-items: start; }
+      .application-cell--actions .application-column-label { text-align: left; }
       .timeline-edit { min-height: 44px; }
       .timeline-section { margin-top: 14px; }
       .timeline-step:not(:last-child)::after { top: 10px; height: 2px; border-radius: 1px; }
@@ -425,8 +427,8 @@
     function hostLabel(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
     function logo(company) {
       const domain = /^[a-z0-9.-]+$/i.test(company.domain) ? company.domain : '';
-      const url = `https://ico.faviconkit.net/favicon/${encodeURIComponent(domain)}?sz=64`;
-      return `<div class="company-logo logo-${company.tone}"><span>${escapeHtml(company.name.slice(0, 2))}</span><img src="${url}" alt="" width="64" height="64" loading="eager" decoding="async" referrerpolicy="no-referrer" onload="if (this.naturalWidth > 0) { this.style.opacity='1'; this.previousElementSibling.style.opacity='0'; }" onerror="this.style.opacity='0'; this.previousElementSibling.style.opacity='1'" /></div>`;
+      const url = `https://ico.faviconkit.net/favicon/${encodeURIComponent(domain)}?sz=128`;
+      return `<div class="company-logo logo-${company.tone}"><span>${escapeHtml(company.name.slice(0, 2))}</span><img src="${url}" alt="" width="128" height="128" loading="eager" decoding="async" referrerpolicy="no-referrer" onload="if (this.naturalWidth > 0) { this.style.opacity='1'; this.previousElementSibling.style.opacity='0'; }" onerror="this.style.opacity='0'; this.previousElementSibling.style.opacity='1'" /></div>`;
     }
     function link(url, label) { return `<a class="company-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ${icon('arrow', 'icon--sm')}</a>`; }
     function recruitmentLink(url) { return `<a class="recruitment-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">招聘链接 ${icon('arrow', 'icon--sm')}</a>`; }
@@ -464,7 +466,7 @@
       });
     }
     function renderApplication(application) {
-      return `<article class="application"><div class="application-info-grid"><div class="application-cell application-cell--title"><span class="application-column-label">投递岗位名称</span><strong class="application-title" title="${escapeHtml(application.title)}">${escapeHtml(application.title)}</strong></div><div class="application-cell application-cell--link"><span class="application-column-label">岗位链接</span><a class="application-link" href="${escapeHtml(application.link)}" target="_blank" rel="noopener noreferrer">查看岗位 ${icon('arrow', 'icon--sm')}</a></div><div class="application-cell application-cell--location"><span class="application-column-label">岗位工作地点</span><span class="application-value">${escapeHtml(application.location)}</span></div><div class="application-cell application-cell--applied"><span class="application-column-label">投递日期</span><span class="application-value">${escapeHtml(application.applied)}</span></div><div class="application-cell application-cell--updated"><span class="application-column-label">最新更新日期</span><span class="application-value">${escapeHtml(application.updated)}</span></div></div>${renderTimeline(application)}</article>`;
+      return `<article class="application"><div class="application-info-grid"><div class="application-cell application-cell--title"><span class="application-column-label">投递岗位名称</span><strong class="application-title" title="${escapeHtml(application.title)}">${escapeHtml(application.title)}</strong></div><div class="application-cell application-cell--link"><span class="application-column-label">岗位链接</span><a class="application-link" href="${escapeHtml(application.link)}" target="_blank" rel="noopener noreferrer">查看岗位 ${icon('arrow', 'icon--sm')}</a></div><div class="application-cell application-cell--location"><span class="application-column-label">岗位工作地点</span><span class="application-value">${escapeHtml(application.location)}</span></div><div class="application-cell application-cell--applied"><span class="application-column-label">投递日期</span><span class="application-value">${escapeHtml(application.applied)}</span></div><div class="application-cell application-cell--updated"><span class="application-column-label">最新更新日期</span><span class="application-value">${escapeHtml(application.updated)}</span></div><div class="application-cell application-cell--actions"><span class="application-column-label">操作</span><div class="actions"><button class="table-action table-action--edit" type="button" data-action="edit-application" data-id="${application.id}">编辑</button><button class="table-action table-action--delete" type="button" data-action="delete-application" data-id="${application.id}">删除</button></div></div></div>${renderTimeline(application)}</article>`;
     }
     function renderCompanyListHead() { return `<div class="company-list-head" aria-hidden="true"><span></span><span>公司</span><span>投递链接</span><span>投递岗位数</span><span>已投递岗位</span><span>操作</span></div>`; }
     function renderCompany(company) {
@@ -569,7 +571,15 @@
         showToast(`已删除${company.name}及 ${relatedCount} 条关联岗位投递。`);
         return;
       }
-      const messages = { new: state.tab === 'applications' ? '新增投递入口已保留，接入现有投递表单即可。' : '新增公司入口已保留，接入现有公司表单即可。', edit: '公司编辑入口已保留，可维护招聘链接、行业类型、招聘批次和优先度。', application: '当前进度编辑入口已触发，可接入现有进度编辑器。', sync: '原型状态：最近同步于今天 09:42。', settings: '偏好设置入口已保留。', help: '帮助中心入口已保留。' };
+      if (action.dataset.action === 'delete-application') {
+        const applicationIndex = applications.findIndex((application) => application.id === action.dataset.id);
+        if (applicationIndex < 0 || !window.confirm(`确认删除“${applications[applicationIndex].title}”投递记录吗？`)) return;
+        const [deleted] = applications.splice(applicationIndex, 1);
+        render();
+        showToast(`已删除${deleted.title}投递记录。`);
+        return;
+      }
+      const messages = { new: state.tab === 'applications' ? '新增投递入口已保留，接入现有投递表单即可。' : '新增公司入口已保留，接入现有公司表单即可。', edit: '公司编辑入口已保留，可维护招聘链接、行业类型、招聘批次和优先度。', 'edit-application': '投递记录编辑入口已触发，可接入现有投递表单。', application: '当前进度编辑入口已触发，可接入现有进度编辑器。', sync: '原型状态：最近同步于今天 09:42。', settings: '偏好设置入口已保留。', help: '帮助中心入口已保留。' };
       showToast(messages[action.dataset.action] || '操作已触发');
     });
     root.addEventListener('input', (event) => {

@@ -1,3 +1,4 @@
+import '@fontsource-variable/noto-sans-sc'
 import './styles.css'
 
 export * from './dashboard.jsx'

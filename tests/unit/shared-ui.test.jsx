@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   CompanyLogo,
@@ -47,6 +47,7 @@ describe('shared readonly dashboard UI', () => {
     expect(screen.getByText('面试中')).toBeInTheDocument()
     expect(screen.getByText('手机只读模式')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /新增|编辑|删除|同步/u })).not.toBeInTheDocument()
+    expect(screen.queryByText('操作')).not.toBeInTheDocument()
   })
 
   it('uses real tabs and controlled filter events', async () => {
@@ -69,13 +70,16 @@ describe('shared readonly dashboard UI', () => {
 
   it('derives a hostname-only favicon URL and keeps a two-character fallback', () => {
     expect(getCompanyIconUrl(company.recruitmentLink))
-      .toBe('https://ico.faviconkit.net/favicon/example.com?sz=64')
+      .toBe('https://ico.faviconkit.net/favicon/example.com?sz=128')
     expect(getCompanyIconUrl('javascript:alert(1)')).toBe('')
     const { container, rerender } = render(<CompanyLogo company={company} />)
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      'https://ico.faviconkit.net/favicon/example.com?sz=64',
+      'https://ico.faviconkit.net/favicon/example.com?sz=128',
     )
+    Object.defineProperty(container.querySelector('img'), 'naturalWidth', { value: 128 })
+    fireEvent.load(container.querySelector('img'))
+    expect(container.querySelector('.rt-company-logo')).toHaveClass('is-loaded')
     expect(container).toHaveTextContent('极光')
     rerender(<CompanyLogo company={{ ...company, recruitmentLink: 'invalid' }} />)
     expect(container.querySelector('img')).not.toBeInTheDocument()

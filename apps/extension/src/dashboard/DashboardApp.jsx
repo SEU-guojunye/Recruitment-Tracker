@@ -464,7 +464,6 @@ export function DashboardApp({
   const [applicationEditor, setApplicationEditor] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [progressEditor, setProgressEditor] = useState(null)
-  const [quickProgressId, setQuickProgressId] = useState(null)
   const [csvImport, setCsvImport] = useState(null)
   const [csvBusy, setCsvBusy] = useState(false)
   const [syncSession, setSyncSession] = useState(null)
@@ -581,18 +580,6 @@ export function DashboardApp({
     } else {
       await applicationService.delete(target.record.id)
       await reloadAfterWrite('投递已删除')
-    }
-  }
-
-  async function quickSwitchProgress(application, stageId) {
-    setQuickProgressId(application.id)
-    try {
-      await applicationService.switchProgress(application.id, stageId)
-      await reloadAfterWrite(`进度已切换为“${application.progressStages.find((stage) => stage.id === stageId)?.name}”`)
-    } catch (error) {
-      setToast(`进度更新失败：${readableError(error)}`)
-    } finally {
-      setQuickProgressId(null)
     }
   }
 
@@ -793,17 +780,6 @@ export function DashboardApp({
         )}
         renderApplicationActions={(application) => (
           <>
-            <select
-              className="rt-quick-progress"
-              aria-label={`快速更新当前环节：${application.id}`}
-              value={application.currentStageId}
-              disabled={quickProgressId === application.id}
-              onChange={(event) => void quickSwitchProgress(application, event.target.value)}
-            >
-              {application.progressStages.map((stage) => (
-                <option value={stage.id} key={stage.id}>{stage.name}</option>
-              ))}
-            </select>
             <button
               className="rt-table-action is-edit"
               type="button"

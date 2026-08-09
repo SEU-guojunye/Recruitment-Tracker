@@ -47,6 +47,28 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await page.getByRole('tab', { name: /岗位投递/u }).click()
     await page.getByRole('button', { name: '展开端到端公司' }).click()
     await expect(page.getByText('上海 / 远程')).toBeVisible()
+    const applicationCard = page.locator('.rt-application-card')
+    await expect(applicationCard.getByText('操作', { exact: true })).toBeVisible()
+    await expect(applicationCard.getByRole('button', { name: '编辑投递' })).toBeVisible()
+    await expect(applicationCard.getByRole('button', { name: '删除' })).toBeVisible()
+    await expect(applicationCard.getByRole('combobox', { name: /快速更新当前环节/u })).toHaveCount(0)
+    const fontState = await page.evaluate(async () => {
+      await document.fonts.ready
+      const faces = [...document.fonts].filter((face) => face.family === 'Noto Sans SC Variable')
+      return {
+        computedFamily: getComputedStyle(document.querySelector('.rt-main')).fontFamily,
+        loadedFaces: faces.filter((face) => face.status === 'loaded').length,
+      }
+    })
+    expect(fontState.computedFamily).toContain('Noto Sans SC Variable')
+    expect(fontState.loadedFaces).toBeGreaterThan(0)
+    await expect(page.locator('.rt-company-list__head')).toHaveCSS('font-weight', '600')
+    await expect(applicationCard.locator('.rt-application-cell').first().locator('span').first())
+      .toHaveCSS('font-weight', '600')
+    await page.getByRole('tab', { name: /招聘信息/u }).click()
+    await expect(page.locator('.rt-recruitment-list__head')).toHaveCSS('font-weight', '600')
+    await page.getByRole('tab', { name: /岗位投递/u }).click()
+    await expect(page.locator('.rt-company-logo img')).toHaveAttribute('src', /sz=128$/u)
     const stored = await page.evaluate(async () => {
       const result = await chrome.storage.local.get('recruitmentTrackerEnvelope')
       return result.recruitmentTrackerEnvelope
