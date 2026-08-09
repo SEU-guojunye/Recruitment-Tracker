@@ -43,6 +43,23 @@ test('readonly component tree exposes no business write controls', async ({ page
   }
 })
 
+test('company logo falls back after every external icon API fails', async ({ page }) => {
+  await page.route('https://a.favicon.im/**', (route) => route.fulfill({ status: 404, body: '' }))
+  await page.route('https://ico.faviconkit.net/**', (route) => route.fulfill({ status: 404, body: '' }))
+  await page.goto('/')
+
+  const logo = page.locator('.rt-company-identity', { hasText: '极光科技' })
+    .first()
+    .locator('.rt-company-logo')
+  await expect(logo.locator(':scope > span')).toHaveText('极')
+  await expect(logo.locator('img')).toHaveCount(0)
+  await expect(logo).not.toHaveClass(/is-loaded/u)
+  await expect(logo).toHaveCSS('background-color', 'rgb(242, 243, 255)')
+  await expect(logo).toHaveCSS('color', 'rgb(0, 82, 217)')
+  await expect(logo).toHaveCSS('border-radius', '6px')
+  await expect(logo).toHaveCSS('font-size', '18px')
+})
+
 test('timeline remains horizontal and keeps core information visible on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/')
@@ -58,6 +75,24 @@ test('timeline remains horizontal and keeps core information visible on mobile',
   expect(mobileColumns).toBe(6)
   await expect(page.locator('.rt-timeline__name', { hasText: '技术一面' })).toBeVisible()
   await expect(page.locator('[aria-current="step"]')).toContainText('技术一面')
+
+  const currentStage = page.getByRole('button', { name: '技术一面：当前，展开详情' })
+  await currentStage.press('Enter')
+  const detail = page.getByRole('region', { name: '技术一面节点详情' })
+  await expect(detail).toContainText('2026.08.08')
+  await expect(detail).toContainText('技术面试反馈良好')
+  await expect(detail.getByRole('link', { name: /meeting\.example\.com\/tech-round/u }))
+    .toHaveAttribute('target', '_blank')
+  const detailLayout = await detail.evaluate((element) => ({
+    columns: getComputedStyle(element).gridTemplateColumns.split(' ').length,
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }))
+  expect(detailLayout.columns).toBe(1)
+  expect(detailLayout.content).toBeLessThanOrEqual(detailLayout.viewport)
+
+  await page.getByRole('button', { name: '技术一面：当前，收起详情' }).press('Space')
+  await expect(detail).toHaveCount(0)
 })
 
 test('application details keep a stable two-column mobile layout', async ({ page }) => {

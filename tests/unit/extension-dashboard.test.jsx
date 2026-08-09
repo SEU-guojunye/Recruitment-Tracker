@@ -5,6 +5,7 @@ import {
   createApplication,
   createCompanyRecord,
   serializeRecruitmentCsv,
+  toLocalDate,
 } from '@recruitment-tracker/core'
 import { DashboardApp } from '../../apps/extension/src/dashboard/DashboardApp.jsx'
 import { describe, expect, it, vi } from 'vitest'
@@ -33,7 +34,7 @@ function createRepository(storageArea = new FakeStorageArea()) {
   return new ChromeLocalRepository({
     storageArea,
     idFactory: () => `test-${++next}`,
-    today: '2026-08-09',
+    today: toLocalDate(),
   })
 }
 

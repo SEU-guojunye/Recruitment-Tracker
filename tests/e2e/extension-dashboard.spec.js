@@ -78,7 +78,29 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await expect(applicationCard.getByRole('button', { name: '编辑投递' })).toBeVisible()
     await expect(applicationCard.getByRole('button', { name: '删除' })).toBeVisible()
     await expect(applicationCard.getByRole('combobox', { name: /快速更新当前环节/u })).toHaveCount(0)
+    await applicationCard.getByRole('button', { name: '编辑进度' }).click()
+    const progressDialog = page.getByRole('dialog', { name: '编辑招聘进度' })
+    await progressDialog.getByRole('textbox', { name: '环节 1 备注或面试链接' }).fill(
+      '准备自我介绍\nhttps://meeting.example.com/e2e-round',
+    )
+    const firstStageDate = await progressDialog.locator('input[type="date"]').first().inputValue()
+    await progressDialog.getByRole('button', { name: '保存进度' }).click()
+    await expect(page.getByText('招聘进度流程已保存')).toBeVisible()
+    await applicationCard.getByRole('button', { name: '已投递：当前，展开详情' }).click()
+    const stageDetail = applicationCard.getByRole('region', { name: '已投递节点详情' })
+    await expect(stageDetail).toContainText(firstStageDate.replaceAll('-', '.'))
+    await expect(stageDetail).toContainText('准备自我介绍')
+    const meetingLink = stageDetail.getByRole('link', { name: /meeting\.example\.com\/e2e-round/u })
+    await expect(meetingLink).toHaveAttribute('href', 'https://meeting.example.com/e2e-round')
+    await expect(meetingLink).toHaveAttribute('rel', 'noopener noreferrer')
     await page.setViewportSize({ width: 320, height: 844 })
+    const mobileDetailLayout = await stageDetail.evaluate((detail) => ({
+      columns: getComputedStyle(detail).gridTemplateColumns.split(' ').length,
+      viewport: document.documentElement.clientWidth,
+      content: document.documentElement.scrollWidth,
+    }))
+    expect(mobileDetailLayout.columns).toBe(1)
+    expect(mobileDetailLayout.content).toBeLessThanOrEqual(mobileDetailLayout.viewport)
     const mobileCompanyLayout = await page.locator('.rt-company-card__head').evaluate((head) => {
       const style = getComputedStyle(head)
       const columnWidths = style.gridTemplateColumns
@@ -205,12 +227,12 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
       .toHaveCSS('justify-content', 'flex-start')
     await expect(page.locator('.rt-recruitment-row > .rt-row-actions')).toHaveCSS('gap', '16px')
     await page.getByRole('tab', { name: /岗位投递/u }).click()
-    await expect(page.locator('.rt-company-logo img')).toHaveAttribute('src', /sz=128$/u)
+    await expect(page.locator('.rt-company-logo').first()).toBeVisible()
     const stored = await page.evaluate(async () => {
       const result = await chrome.storage.local.get('recruitmentTrackerEnvelope')
       return result.recruitmentTrackerEnvelope
     })
-    expect(stored.sync).toMatchObject({ localRevision: 2, dirty: true })
+    expect(stored.sync).toMatchObject({ localRevision: 3, dirty: true })
     expect(stored.data).toMatchObject({
       companies: [{
         companyName: '端到端公司',
@@ -218,7 +240,13 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
         recruitmentBatch: '秋招提前批',
         priority: 'P0',
       }],
-      applications: [{ workLocation: '上海 / 远程' }],
+      applications: [{
+        workLocation: '上海 / 远程',
+      }],
+    })
+    expect(stored.data.applications[0].progressStages[0]).toMatchObject({
+      name: '已投递',
+      note: '准备自我介绍\nhttps://meeting.example.com/e2e-round',
     })
 
     await context.close()
@@ -231,6 +259,9 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await expect(page.getByText('端到端公司')).toBeVisible()
     await page.getByRole('button', { name: '展开端到端公司' }).click()
     await expect(page.getByText('上海 / 远程')).toBeVisible()
+    await page.getByRole('button', { name: '已投递：当前，展开详情' }).click()
+    await expect(page.getByRole('region', { name: '已投递节点详情' }))
+      .toContainText('准备自我介绍')
   } finally {
     await context.close()
   }
