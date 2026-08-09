@@ -378,7 +378,8 @@ a {
 .rt-form-field select,
 .rt-form-field textarea,
 .rt-stage-row input:not([type="radio"]):not([type="checkbox"]),
-.rt-stage-row select {
+.rt-stage-row select,
+.rt-stage-row textarea {
   width: 100%;
   min-height: 38px;
   padding: 0 10px;
@@ -405,7 +406,8 @@ a {
 .rt-form-field select:focus,
 .rt-form-field textarea:focus,
 .rt-stage-row input:focus,
-.rt-stage-row select:focus {
+.rt-stage-row select:focus,
+.rt-stage-row textarea:focus {
   border-color: var(--td-brand-6);
   box-shadow: 0 0 0 3px var(--td-focus);
 }
@@ -1316,6 +1318,17 @@ a {
   height: 34px;
   min-height: 34px;
   padding: 0 7px;
+}
+
+.rt-stage-note {
+  grid-column: 1 / -1;
+}
+
+.rt-stage-note textarea {
+  min-height: 64px;
+  padding: 8px 9px;
+  line-height: 1.6;
+  resize: vertical;
 }
 
 .rt-stage-current {

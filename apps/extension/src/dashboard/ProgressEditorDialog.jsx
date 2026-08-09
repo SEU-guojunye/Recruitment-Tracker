@@ -14,6 +14,7 @@ function newStage() {
     phase: 'screening',
     isTerminal: false,
     date: '',
+    note: '',
   }
 }
 
@@ -78,6 +79,7 @@ export function ProgressEditorDialog({
     const trimmedStages = stages.map((stage) => ({
       ...stage,
       name: stage.name.trim(),
+      note: stage.note.trim(),
       isTerminal: stage.phase === 'closed' ? true : stage.isTerminal,
     }))
     if (trimmedStages.some((stage) => !stage.name)) {
@@ -110,7 +112,7 @@ export function ProgressEditorDialog({
     <Dialog
       open
       title="编辑招聘进度"
-      description="环节名称用于展示；稳定阶段与终态用于统计和筛选。"
+      description="环节名称用于展示；日期与备注可记录面试链接、反馈和准备事项。"
       onClose={onClose}
     >
       <div className="rt-form">
@@ -175,6 +177,16 @@ export function ProgressEditorDialog({
                   aria-label={`环节 ${index + 1} 设为终态`}
                 />
                 终态
+              </label>
+              <label className="rt-stage-note">
+                <span>备注或面试链接</span>
+                <textarea
+                  maxLength={FIELD_LIMITS.notes}
+                  value={stage.note}
+                  placeholder="可填写会议链接、面试反馈或下一轮准备事项"
+                  onChange={(event) => updateStage(stage.id, { note: event.target.value })}
+                  aria-label={`环节 ${index + 1} 备注或面试链接`}
+                />
               </label>
               <div className="rt-stage-actions">
                 <button

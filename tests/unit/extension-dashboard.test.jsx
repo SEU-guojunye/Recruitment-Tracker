@@ -285,6 +285,17 @@ describe('editable extension dashboard', () => {
     expect(within(actionCell).getByRole('button', { name: '删除' })).toBeInTheDocument()
 
     await user.click(within(firstCard).getByRole('button', { name: '编辑进度' }))
+    const stageNoteFields = screen.getAllByRole('textbox', { name: /备注或面试链接/u })
+    expect(stageNoteFields).toHaveLength(6)
+    await user.type(
+      stageNoteFields[0],
+      '  提前准备系统设计{enter}https://meeting.example.com/round-1  ',
+    )
+    await user.click(screen.getByRole('button', { name: '＋ 添加环节' }))
+    const notesAfterAdding = screen.getAllByRole('textbox', { name: /备注或面试链接/u })
+    expect(notesAfterAdding).toHaveLength(7)
+    expect(notesAfterAdding.at(-1)).toHaveValue('')
+    await user.click(screen.getByRole('button', { name: '删除环节：新环节' }))
     await user.click(screen.getByRole('radio', { name: '设为当前环节：筛选' }))
     await user.click(screen.getByRole('button', { name: '删除环节：筛选' }))
     const saveButton = screen.getByRole('button', { name: '保存进度' })
@@ -297,6 +308,8 @@ describe('editable extension dashboard', () => {
     const savedFirst = data.applications.find((item) => item.id === first.id)
     const untouchedSecond = data.applications.find((item) => item.id === second.id)
     expect(savedFirst.progressStages).toHaveLength(5)
+    expect(savedFirst.progressStages[0].note)
+      .toBe('提前准备系统设计\nhttps://meeting.example.com/round-1')
     expect(savedFirst).toMatchObject({
       currentStageId: first.progressStages[2].id,
       progressStatus: '笔试',
