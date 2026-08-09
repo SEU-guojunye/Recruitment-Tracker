@@ -92,7 +92,7 @@ describe('shared readonly dashboard UI', () => {
     expect(screen.queryByRole('region', { name: '结果节点详情' })).not.toBeInTheDocument()
   })
 
-  it('derives a hostname-only favicon URL and keeps a two-character fallback', () => {
+  it('derives a hostname-only favicon URL and keeps a one-character themed fallback', () => {
     expect(getCompanyIconUrl(company.recruitmentLink))
       .toBe('https://ico.faviconkit.net/favicon/example.com?sz=128')
     expect(getCompanyIconUrl('javascript:alert(1)')).toBe('')
@@ -101,13 +101,17 @@ describe('shared readonly dashboard UI', () => {
       'src',
       'https://ico.faviconkit.net/favicon/example.com?sz=128',
     )
+    expect(container).toHaveTextContent('极')
+    expect(container).not.toHaveTextContent('极光')
+    fireEvent.error(container.querySelector('img'))
+    expect(container.querySelector('.rt-company-logo')).not.toHaveClass('is-loaded')
     Object.defineProperty(container.querySelector('img'), 'naturalWidth', { value: 128 })
     fireEvent.load(container.querySelector('img'))
     expect(container.querySelector('.rt-company-logo')).toHaveClass('is-loaded')
-    expect(container).toHaveTextContent('极光')
     rerender(<CompanyLogo company={{ ...company, recruitmentLink: 'invalid' }} />)
     expect(container.querySelector('img')).not.toBeInTheDocument()
-    expect(container).toHaveTextContent('极光')
+    expect(container).toHaveTextContent('极')
+    expect(container).not.toHaveTextContent('极光')
   })
 
   it('exposes retryable errors as alerts', async () => {

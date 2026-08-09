@@ -575,10 +575,11 @@ a {
   overflow: hidden;
   border: 0;
   border-radius: var(--td-radius);
-  color: var(--td-brand-7);
-  background: transparent;
-  font-size: 11px;
+  color: var(--td-brand-6);
+  background: var(--td-brand-1);
+  font-size: 18px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .rt-company-logo > span {
@@ -604,6 +605,10 @@ a {
 
 .rt-company-logo.is-loaded img {
   opacity: 1;
+}
+
+.rt-company-logo.is-loaded {
+  background: transparent;
 }
 
 .rt-company-logo.is-loaded > span {

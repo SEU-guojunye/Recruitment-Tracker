@@ -121,7 +121,7 @@ export function CompanyLogo({ company }) {
   const iconUrl = getCompanyIconUrl(company.recruitmentLink)
   const [loadedUrl, setLoadedUrl] = useState('')
   const loaded = Boolean(iconUrl) && loadedUrl === iconUrl
-  const fallback = company.companyName.trim().slice(0, 2) || '公司'
+  const fallback = Array.from(company.companyName.trim())[0] || '企'
   return (
     <span className={`rt-company-logo ${loaded ? 'is-loaded' : ''}`} aria-hidden="true">
       <span>{fallback}</span>
