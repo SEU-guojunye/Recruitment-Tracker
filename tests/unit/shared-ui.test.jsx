@@ -97,8 +97,13 @@ describe('shared readonly dashboard UI', () => {
   })
 
   it('tries multiple external icon APIs and keeps a one-character themed fallback', () => {
+    expect(getCompanyIconUrls(company.recruitmentLink, { brandfetchClientId: 'public-client-id' })).toEqual([
+      'https://cdn.brandfetch.io/example.com/w/128/h/128/fallback/404/type/icon.png?c=public-client-id',
+      'https://logo.tomba.io/example.com',
+      'https://ico.faviconkit.net/favicon/example.com?sz=128',
+    ])
     expect(getCompanyIconUrls(company.recruitmentLink)).toEqual([
-      'https://a.favicon.im/example.com?larger=true&throw-error-on-404=true',
+      'https://logo.tomba.io/example.com',
       'https://ico.faviconkit.net/favicon/example.com?sz=128',
     ])
     expect(getCompanyIconUrl(company.recruitmentLink))
@@ -108,7 +113,7 @@ describe('shared readonly dashboard UI', () => {
     const { container, unmount } = render(<CompanyLogo company={company} />)
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      'https://a.favicon.im/example.com?larger=true&throw-error-on-404=true',
+      'https://logo.tomba.io/example.com',
     )
     expect(container).toHaveTextContent('极')
     expect(container).not.toHaveTextContent('极光')

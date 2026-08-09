@@ -44,7 +44,8 @@ test('readonly component tree exposes no business write controls', async ({ page
 })
 
 test('company logo falls back after every external icon API fails', async ({ page }) => {
-  await page.route('https://a.favicon.im/**', (route) => route.fulfill({ status: 404, body: '' }))
+  await page.route('https://cdn.brandfetch.io/**', (route) => route.fulfill({ status: 404, body: '' }))
+  await page.route('https://logo.tomba.io/**', (route) => route.fulfill({ status: 404, body: '' }))
   await page.route('https://ico.faviconkit.net/**', (route) => route.fulfill({ status: 404, body: '' }))
   await page.goto('/')
 

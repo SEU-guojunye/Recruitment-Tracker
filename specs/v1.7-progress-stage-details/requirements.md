@@ -14,7 +14,7 @@
 - 未到达节点仍允许展开，便于提前保存面试链接或准备事项。
 - 旧本地数据、旧 CloudBase 快照和缺少 `note` 的 `progressStages` CSV 自动补 `note: ""`，不提升 `schemaVersion`。
 - CSV 不新增独立列，节点备注继续包含在 `progressStages` JSON 中。
-- 公司图标依次尝试 Favicon.im 和 FaviconKit 外部 API；全部来源失败时显示浅主题色圆角矩形和公司名称首字，不显示破损图片。
+- 公司图标依次尝试 Brandfetch、Tomba 和 FaviconKit 外部 API；Brandfetch 仅在配置公开客户端 ID 时启用，全部启用来源失败时显示浅主题色圆角矩形和公司名称首字，不显示破损图片。
 
 ## 用户故事与验收标准
 
@@ -67,7 +67,7 @@
 
 作为列表查看者，我希望系统从多个来源尝试企业图标，以提高图标命中率和清晰度。
 
-- 当公司招聘链接合法时，应依次尝试 Favicon.im 高清 API 和 FaviconKit 128px API。
+- 当公司招聘链接合法时，应依次尝试 Brandfetch、Tomba 和 FaviconKit 128px API；未配置 Brandfetch 客户端 ID 时跳过 Brandfetch。
 - 当前来源加载或图片解析失败时，应自动尝试下一来源，不阻塞公司列表。
 - 任一来源加载成功后应停止切换；只有全部来源失败后才显示首字回退。
 - 向第三方 API 只发送经校验和编码的 hostname，不发送招聘路径或查询参数。
