@@ -53,6 +53,46 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await expect(applicationCard.getByRole('button', { name: '编辑投递' })).toBeVisible()
     await expect(applicationCard.getByRole('button', { name: '删除' })).toBeVisible()
     await expect(applicationCard.getByRole('combobox', { name: /快速更新当前环节/u })).toHaveCount(0)
+    await page.setViewportSize({ width: 320, height: 844 })
+    const mobileCompanyLayout = await page.locator('.rt-company-card__head').evaluate((head) => {
+      const style = getComputedStyle(head)
+      const columnWidths = style.gridTemplateColumns
+        .split(' ')
+        .map((value) => Number.parseFloat(value))
+      const actions = head.querySelector('.rt-row-actions')
+      const actionsRect = actions.getBoundingClientRect()
+      const appliedJobsRect = head.querySelector('.rt-applied-jobs').getBoundingClientRect()
+      const summaryCells = [...head.querySelectorAll('.rt-company-summary-cell')]
+        .slice(0, 2)
+        .map((cell) => cell.getBoundingClientRect().width)
+      const buttonStyles = [...actions.querySelectorAll('.rt-table-action')].map((button) => {
+        const buttonStyle = getComputedStyle(button)
+        return {
+          whiteSpace: buttonStyle.whiteSpace,
+          writingMode: buttonStyle.writingMode,
+        }
+      })
+
+      return {
+        columnCount: columnWidths.length,
+        contentColumnsAreEqual: Math.abs(columnWidths[1] - columnWidths[2]) <= 1,
+        summaryCellsAreEqual: Math.abs(summaryCells[0] - summaryCells[1]) <= 1,
+        columnGap: style.columnGap,
+        actionsUseOwnRow: actionsRect.top >= appliedJobsRect.bottom,
+        buttonStyles,
+      }
+    })
+    expect(mobileCompanyLayout).toEqual({
+      columnCount: 3,
+      contentColumnsAreEqual: true,
+      summaryCellsAreEqual: true,
+      columnGap: '12px',
+      actionsUseOwnRow: true,
+      buttonStyles: [
+        { whiteSpace: 'nowrap', writingMode: 'horizontal-tb' },
+        { whiteSpace: 'nowrap', writingMode: 'horizontal-tb' },
+      ],
+    })
     const fontState = await page.evaluate(async () => {
       await document.fonts.ready
       const faces = [...document.fonts].filter((face) => face.family === 'Noto Sans SC Variable')

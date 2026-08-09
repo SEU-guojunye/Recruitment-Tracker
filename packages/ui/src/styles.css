@@ -1045,6 +1045,11 @@ a {
   line-height: 20px;
 }
 
+.rt-table-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .rt-table-action:hover,
 .rt-table-action.is-apply,
 .rt-editable-field:hover {
@@ -1378,11 +1383,11 @@ a {
     display: block;
   }
 
-  .rt-company-card__head > .rt-company-summary-cell:nth-of-type(1) {
+  .rt-company-card__head > .rt-company-summary-link {
     grid-column: 2;
   }
 
-  .rt-company-card__head > .rt-company-summary-cell:nth-of-type(2) {
+  .rt-company-card__head > .rt-company-summary-count {
     grid-column: 3;
   }
 
@@ -1567,27 +1572,29 @@ a {
 
   .rt-company-list.is-editable .rt-company-card__head,
   .rt-company-list.is-readonly .rt-company-card__head {
-    grid-template-columns: 34px minmax(0, 1fr) minmax(72px, 0.55fr);
+    grid-template-columns: 34px repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
   }
 
-  .rt-company-list.is-editable .rt-company-card__head > .rt-company-identity {
-    grid-column: 2;
-  }
-
+  .rt-company-list.is-editable .rt-company-card__head > .rt-company-identity,
   .rt-company-list.is-readonly .rt-company-card__head > .rt-company-identity {
     grid-column: 2 / -1;
   }
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-row-actions {
-    grid-column: 3;
-    grid-row: 1;
+    grid-column: 2 / -1;
+    grid-row: auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--td-border);
   }
 
-  .rt-company-card__head > .rt-company-summary-cell:nth-of-type(1) {
+  .rt-company-card__head > .rt-company-summary-link {
     grid-column: 2;
   }
 
-  .rt-company-card__head > .rt-company-summary-cell:nth-of-type(2) {
+  .rt-company-card__head > .rt-company-summary-count {
     grid-column: 3;
   }
 
@@ -1599,9 +1606,10 @@ a {
     font-size: 13px;
   }
 
-  .rt-application-info-grid {
+  .rt-application-info-grid.is-readonly,
+  .rt-application-info-grid.is-editable {
     align-items: start;
-    gap: 14px 10px;
+    gap: 14px 12px;
   }
 
   .rt-application-cell--title {
@@ -1611,6 +1619,11 @@ a {
   .rt-application-cell--actions {
     grid-column: 1 / -1;
     justify-items: start;
+  }
+
+  .rt-application-cell--actions .rt-row-actions {
+    gap: 12px;
+    justify-content: flex-start;
   }
 
   .rt-application-cell--actions > span:first-child {

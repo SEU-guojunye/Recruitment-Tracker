@@ -286,7 +286,7 @@ function ApplicationCompanyList({
                 <CompanyLogo company={row.company} />
                 <strong title={row.company.companyName}>{row.company.companyName}</strong>
               </div>
-              <div className="rt-company-summary-cell" data-label="投递链接">
+              <div className="rt-company-summary-cell rt-company-summary-link" data-label="投递链接">
                 <ExternalLink className="rt-company-link" href={row.company.recruitmentLink}>投递链接</ExternalLink>
               </div>
               <div className="rt-company-summary-cell rt-company-summary-count" data-label="投递岗位数">

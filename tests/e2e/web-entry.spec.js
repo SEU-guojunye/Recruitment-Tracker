@@ -73,9 +73,14 @@ test('application details keep a stable two-column mobile layout', async ({ page
       const rect = cell.getBoundingClientRect()
       return rect.left >= gridRect.left - 1 && rect.right <= gridRect.right + 1
     })
+    const columnWidths = getComputedStyle(grid).gridTemplateColumns
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
 
     return {
-      columnCount: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+      columnCount: columnWidths.length,
+      columnsAreEqual: Math.abs(columnWidths[0] - columnWidths[1]) <= 1,
+      columnGap: getComputedStyle(grid).columnGap,
       titleUsesFullRow: Math.abs(titleRect.left - gridRect.left) <= 1
         && Math.abs(titleRect.right - gridRect.right) <= 1,
       metadataStartsBelowTitle: metadataRect.top >= titleRect.bottom,
@@ -85,8 +90,39 @@ test('application details keep a stable two-column mobile layout', async ({ page
 
   expect(layout).toEqual({
     columnCount: 2,
+    columnsAreEqual: true,
+    columnGap: '12px',
     titleUsesFullRow: true,
     metadataStartsBelowTitle: true,
     cellsStayInside: true,
+  })
+})
+
+test('company summary columns are equal and evenly spaced on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 })
+  await page.goto('/')
+
+  const layout = await page.locator('.rt-company-card__head').first().evaluate((head) => {
+    const style = getComputedStyle(head)
+    const columnWidths = style.gridTemplateColumns
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
+    const summaryCells = [...head.querySelectorAll('.rt-company-summary-cell')]
+      .slice(0, 2)
+      .map((cell) => cell.getBoundingClientRect().width)
+
+    return {
+      columnCount: columnWidths.length,
+      contentColumnsAreEqual: Math.abs(columnWidths[1] - columnWidths[2]) <= 1,
+      summaryCellsAreEqual: Math.abs(summaryCells[0] - summaryCells[1]) <= 1,
+      columnGap: style.columnGap,
+    }
+  })
+
+  expect(layout).toEqual({
+    columnCount: 3,
+    contentColumnsAreEqual: true,
+    summaryCellsAreEqual: true,
+    columnGap: '12px',
   })
 })
