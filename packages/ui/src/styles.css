@@ -872,6 +872,10 @@ a {
   color: var(--td-brand-6);
 }
 
+.rt-timeline__trigger:hover .rt-timeline__label {
+  color: var(--td-brand-6);
+}
+
 .rt-timeline__label {
   display: inline-flex;
   align-items: center;
@@ -879,6 +883,7 @@ a {
   gap: 4px;
   min-width: 0;
   margin-top: 6px;
+  color: var(--td-text-placeholder);
 }
 
 .rt-timeline__expand-hint {
@@ -887,7 +892,7 @@ a {
   height: 0;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 5px solid var(--td-brand-6);
+  border-left: 5px solid currentColor;
   transition: transform 120ms ease;
 }
 
@@ -929,9 +934,17 @@ a {
   color: var(--td-text-primary);
 }
 
+.rt-timeline__step.is-completed .rt-timeline__label {
+  color: var(--td-text-primary);
+}
+
 .rt-timeline__step.is-current .rt-timeline__name {
   color: var(--td-brand-6);
   font-weight: 500;
+}
+
+.rt-timeline__step.is-current .rt-timeline__label {
+  color: var(--td-brand-6);
 }
 
 .rt-timeline-detail {

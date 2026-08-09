@@ -68,6 +68,9 @@ describe('shared readonly dashboard UI', () => {
     expect(screen.getByText('未到达')).toBeInTheDocument()
     expect(screen.getByLabelText('招聘进度：当前为业务面谈')).toBeInTheDocument()
     expect(screen.getByText('业务面谈').closest('li')).toHaveAttribute('aria-current', 'step')
+    const timelineLabel = document.querySelector('.rt-timeline__label')
+    expect(timelineLabel?.firstElementChild).toHaveClass('rt-timeline__expand-hint')
+    expect(timelineLabel?.lastElementChild).toHaveClass('rt-timeline__name')
 
     const interviewTrigger = screen.getByRole('button', { name: '业务面谈：当前，展开详情' })
     expect(interviewTrigger).toHaveAttribute('aria-expanded', 'false')

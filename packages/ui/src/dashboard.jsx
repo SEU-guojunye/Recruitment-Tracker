@@ -249,8 +249,8 @@ export function ProgressTimeline({ application, action = null }) {
                 {stage.state === 'completed' ? <Icon name="check" /> : null}
               </span>
               <span className="rt-timeline__label">
-                <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
                 <span className="rt-timeline__expand-hint" aria-hidden="true" />
+                <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
               </span>
               <span className="rt-sr-only">{stateLabels[stage.state]}</span>
             </button>
