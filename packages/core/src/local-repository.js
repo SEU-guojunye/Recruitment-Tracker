@@ -144,6 +144,24 @@ export class ChromeLocalRepository {
     }).then((envelope) => ({ envelope, deletedApplications }))
   }
 
+  deleteApplicationsByCompany(companyId) {
+    let deletedApplications = 0
+    return this.transactData((data) => {
+      if (!data.companies.some((company) => company.id === companyId)) {
+        throw new Error('公司记录不存在')
+      }
+      const remaining = data.applications.filter(
+        (application) => application.companyId !== companyId,
+      )
+      deletedApplications = data.applications.length - remaining.length
+      if (deletedApplications === 0) {
+        throw new Error('该公司暂无投递记录')
+      }
+      data.applications = remaining
+      return data
+    }).then((envelope) => ({ envelope, deletedApplications }))
+  }
+
   saveApplication(application) {
     return this.transactData((data) => {
       const companyIds = new Set(data.companies.map((company) => company.id))

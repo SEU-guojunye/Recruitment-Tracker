@@ -160,6 +160,27 @@ describe('ChromeLocalRepository envelope and atomicity', () => {
     expect(storageArea.setCalls - beforeDeleteCalls).toBe(1)
   })
 
+  it('deletes every application for one company atomically and keeps the company', async () => {
+    const storageArea = new FakeStorageArea()
+    const repository = createRepository({ storageArea })
+    const targetCompany = company()
+    const otherCompany = company({ id: 'company-other', companyName: 'Other' })
+    await repository.saveCompany(targetCompany)
+    await repository.saveCompany(otherCompany)
+    await repository.saveApplication(application(targetCompany, { id: 'app-a' }))
+    await repository.saveApplication(application(targetCompany, { id: 'app-b' }))
+    await repository.saveApplication(application(otherCompany, { id: 'app-other' }))
+    const beforeDeleteCalls = storageArea.setCalls
+
+    const result = await repository.deleteApplicationsByCompany(targetCompany.id)
+    expect(result.deletedApplications).toBe(2)
+    expect(result.envelope.data.companies).toEqual([targetCompany, otherCompany])
+    expect(result.envelope.data.applications).toEqual([
+      expect.objectContaining({ id: 'app-other', companyId: otherCompany.id }),
+    ])
+    expect(storageArea.setCalls - beforeDeleteCalls).toBe(1)
+  })
+
   it('rejects an oversized write before storage and preserves prior data', async () => {
     const storageArea = new FakeStorageArea()
     const repository = createRepository({ storageArea, maxDataBytes: 400 })
@@ -266,5 +287,15 @@ describe('CompanyService and ApplicationService', () => {
     const service = new CompanyService(repository)
     await expect(service.delete('company-a')).resolves.toEqual({ deletedApplications: 3 })
     expect(repository.deleteCompanyCascade).toHaveBeenCalledOnce()
+  })
+
+  it('delegates one atomic company-application deletion', async () => {
+    const repository = {
+      deleteApplicationsByCompany: vi.fn().mockResolvedValue({ deletedApplications: 2 }),
+    }
+    const service = new ApplicationService(repository)
+    await expect(service.deleteAllForCompany('company-a'))
+      .resolves.toEqual({ deletedApplications: 2 })
+    expect(repository.deleteApplicationsByCompany).toHaveBeenCalledWith('company-a')
   })
 })

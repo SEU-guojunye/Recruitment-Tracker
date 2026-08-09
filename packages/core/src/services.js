@@ -167,4 +167,8 @@ export class ApplicationService {
   delete(applicationId) {
     return this.repository.deleteApplication(applicationId)
   }
+
+  deleteAllForCompany(companyId) {
+    return this.repository.deleteApplicationsByCompany(companyId)
+  }
 }
