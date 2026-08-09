@@ -38,19 +38,23 @@ function createRepository(storageArea = new FakeStorageArea()) {
 }
 
 async function addCompany(user, name = '极光科技') {
-  await user.click(screen.getByRole('button', { name: '＋ 招聘信息' }))
+  await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
+  await user.click(screen.getByRole('button', { name: '新增公司' }))
   await user.type(screen.getByLabelText('公司名称'), name)
   await user.type(
     screen.getByLabelText('公司招聘链接'),
     'https://example.com/careers',
   )
-  await user.type(screen.getByLabelText('公司备注'), '重点关注校招')
+  await user.type(screen.getByLabelText('行业类型'), '互联网')
+  await user.selectOptions(screen.getByLabelText('招聘批次'), '秋招提前批')
+  await user.selectOptions(screen.getByLabelText('优先度'), 'P0')
   await user.click(screen.getByRole('button', { name: '保存' }))
   await screen.findByText('公司招聘信息已保存')
 }
 
 async function addApplication(user, location) {
-  await user.click(screen.getByRole('button', { name: '＋ 新增投递' }))
+  const companyRow = screen.getByText('极光科技').closest('.rt-recruitment-row')
+  await user.click(within(companyRow).getByRole('button', { name: '投递' }))
   await user.type(screen.getByLabelText('工作地点'), location)
   await user.type(
     screen.getByLabelText('招聘投递链接'),
@@ -121,8 +125,15 @@ describe('editable extension dashboard', () => {
 
     await addCompany(user)
     expect(screen.getByText('公司招聘信息已保存')).toBeInTheDocument()
+    expect((await repository.getData()).companies[0]).toMatchObject({
+      industryType: '互联网',
+      recruitmentBatch: '秋招提前批',
+      priority: 'P0',
+      companyNotes: '',
+    })
     await addApplication(user, '上海')
     await addApplication(user, '北京')
+    await user.click(screen.getByRole('tab', { name: /岗位投递/u }))
 
     const firstCard = screen.getByText('投递记录 01').closest('.rt-application-card')
     await user.click(within(firstCard).getByRole('button', { name: '编辑投递' }))
@@ -163,7 +174,8 @@ describe('editable extension dashboard', () => {
     await screen.findByText('电脑编辑模式')
     await waitFor(() => expect(screen.getByText(/本地占用/u)).toHaveTextContent('KB'))
 
-    await user.click(screen.getByRole('button', { name: '＋ 招聘信息' }))
+    await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
+    await user.click(screen.getByRole('button', { name: '新增公司' }))
     await user.type(screen.getByLabelText('公司名称'), '失败公司')
     storageArea.failNextSet = true
     await user.click(screen.getByRole('button', { name: '保存' }))
@@ -176,7 +188,8 @@ describe('editable extension dashboard', () => {
     const user = userEvent.setup()
     render(<DashboardApp repository={createRepository()} />)
     await screen.findByText('电脑编辑模式')
-    const trigger = await screen.findByRole('button', { name: '＋ 招聘信息' })
+    await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
+    const trigger = await screen.findByRole('button', { name: '新增公司' })
     await user.click(trigger)
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     await user.keyboard('{Escape}')

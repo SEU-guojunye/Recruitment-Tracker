@@ -3,10 +3,15 @@ import {
   APPLICATION_SCOPES,
   ApplicationService,
   ChromeLocalRepository,
+  COMPANY_PRIORITIES,
   CompanyNameConflictError,
   CompanyService,
   CsvImportExportService,
+  DEFAULT_COMPANY_PRIORITY,
+  DEFAULT_RECRUITMENT_BATCH,
   DomainValidationError,
+  INDUSTRY_TYPE_PRESETS,
+  RECRUITMENT_BATCHES,
   toLocalDate,
 } from '@recruitment-tracker/core'
 import {
@@ -43,11 +48,20 @@ function readableError(error) {
   return error?.message || '操作失败，请重试'
 }
 
-function CompanyDialog({ open, company, companyService, onSaved, onClose }) {
+function CompanyDialog({
+  open,
+  company,
+  focusField = 'companyName',
+  companyService,
+  onSaved,
+  onClose,
+}) {
   const [values, setValues] = useState(() => ({
     companyName: company?.companyName || '',
     recruitmentLink: company?.recruitmentLink || '',
-    companyNotes: company?.companyNotes || '',
+    industryType: company?.industryType || '',
+    recruitmentBatch: company?.recruitmentBatch || DEFAULT_RECRUITMENT_BATCH,
+    priority: company?.priority || DEFAULT_COMPANY_PRIORITY,
   }))
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState(null)
@@ -128,7 +142,7 @@ function CompanyDialog({ open, company, companyService, onSaved, onClose }) {
         <div className="rt-form-grid">
           <FormField label="公司名称" full>
             <input
-              data-autofocus
+              data-autofocus={focusField === 'companyName' || undefined}
               required
               maxLength={120}
               value={values.companyName}
@@ -137,6 +151,7 @@ function CompanyDialog({ open, company, companyService, onSaved, onClose }) {
           </FormField>
           <FormField label="公司招聘链接" full>
             <input
+              data-autofocus={focusField === 'recruitmentLink' || undefined}
               type="url"
               maxLength={2048}
               placeholder="https://example.com/careers"
@@ -144,12 +159,36 @@ function CompanyDialog({ open, company, companyService, onSaved, onClose }) {
               onChange={(event) => update('recruitmentLink', event.target.value)}
             />
           </FormField>
-          <FormField label="公司备注" full>
-            <textarea
-              maxLength={5000}
-              value={values.companyNotes}
-              onChange={(event) => update('companyNotes', event.target.value)}
+          <FormField label="行业类型" full>
+            <input
+              data-autofocus={focusField === 'industryType' || undefined}
+              list="industry-type-options"
+              maxLength={80}
+              placeholder="选择常用行业或输入自定义行业"
+              value={values.industryType}
+              onChange={(event) => update('industryType', event.target.value)}
             />
+            <datalist id="industry-type-options">
+              {INDUSTRY_TYPE_PRESETS.map((value) => <option value={value} key={value} />)}
+            </datalist>
+          </FormField>
+          <FormField label="招聘批次">
+            <select
+              data-autofocus={focusField === 'recruitmentBatch' || undefined}
+              value={values.recruitmentBatch}
+              onChange={(event) => update('recruitmentBatch', event.target.value)}
+            >
+              {RECRUITMENT_BATCHES.map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
+          </FormField>
+          <FormField label="优先度">
+            <select
+              data-autofocus={focusField === 'priority' || undefined}
+              value={values.priority}
+              onChange={(event) => update('priority', event.target.value)}
+            >
+              {COMPANY_PRIORITIES.map((value) => <option value={value} key={value}>{value}</option>)}
+            </select>
           </FormField>
         </div>
         <div className="rt-form-actions">
@@ -418,6 +457,8 @@ export function DashboardApp({
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState(APPLICATION_SCOPES.ACTIVE)
   const [phase, setPhase] = useState(null)
+  const [priority, setPriority] = useState(null)
+  const [industryType, setIndustryType] = useState(null)
   const [expandedCompanyIds, setExpandedCompanyIds] = useState(new Set())
   const [companyEditor, setCompanyEditor] = useState(null)
   const [applicationEditor, setApplicationEditor] = useState(null)
@@ -527,13 +568,6 @@ export function DashboardApp({
       (application) => application.companyId === company.id,
     ).length
     setDeleteTarget({ type: 'company', record: company, applicationCount })
-  }
-
-  function showCompanyApplications(company) {
-    setQuery(company.companyName)
-    setScope(APPLICATION_SCOPES.ALL)
-    setExpandedCompanyIds((current) => new Set(current).add(company.id))
-    void changeTab('applications')
   }
 
   async function confirmDelete(target) {
@@ -658,6 +692,10 @@ export function DashboardApp({
         onScopeChange={setScope}
         phase={phase}
         onPhaseChange={setPhase}
+        priority={priority}
+        onPriorityChange={setPriority}
+        industryType={industryType}
+        onIndustryTypeChange={setIndustryType}
         expandedCompanyIds={expandedCompanyIds}
         onToggleCompany={toggleCompany}
         loading={loading}
@@ -690,6 +728,13 @@ export function DashboardApp({
             >
               导出 CSV
             </button>
+            <span className={capacity?.warning ? 'rt-capacity is-warning' : 'rt-capacity'}>
+              本地占用 {capacityLabel}
+            </span>
+          </>
+        )}
+        pageActions={(
+          <>
             {syncClient ? (
               <button
                 className={`rt-sync-status is-${envelope?.sync.status || 'idle'}`}
@@ -699,19 +744,19 @@ export function DashboardApp({
                 同步：{SYNC_STATUS_LABELS[envelope?.sync.status] || '加载中'}
               </button>
             ) : null}
-            <span className={capacity?.warning ? 'rt-capacity is-warning' : 'rt-capacity'}>
-              本地占用 {capacityLabel}
-            </span>
-            <button className="rt-action-button is-secondary" type="button" onClick={() => setCompanyEditor({ company: null })}>
-              ＋ 招聘信息
-            </button>
             <button
               className="rt-action-button"
               type="button"
-              disabled={companies.length === 0}
-              onClick={() => setApplicationEditor({ application: null, companyId: null })}
+              disabled={activeTab === 'applications' && companies.length === 0}
+              onClick={() => {
+                if (activeTab === 'applications') {
+                  setApplicationEditor({ application: null, companyId: null })
+                } else {
+                  setCompanyEditor({ company: null, focusField: 'companyName' })
+                }
+              }}
             >
-              ＋ 新增投递
+              {activeTab === 'applications' ? '新增投递' : '新增公司'}
             </button>
           </>
         )}
@@ -719,27 +764,32 @@ export function DashboardApp({
           <>
             {activeTab === 'recruitment' ? (
               <button
-                className="rt-action-button is-secondary"
+                className="rt-table-action is-apply"
                 type="button"
-                onClick={() => showCompanyApplications(company)}
+                onClick={() => setApplicationEditor({ application: null, companyId: company.id })}
               >
-                查看投递
+                投递
               </button>
             ) : null}
-            <button
-              className="rt-action-button"
-              type="button"
-              onClick={() => setApplicationEditor({ application: null, companyId: company.id })}
-            >
-              ＋ 投递
-            </button>
-            <button className="rt-action-button is-secondary" type="button" onClick={() => setCompanyEditor({ company })}>
+            <button className="rt-table-action is-edit" type="button" onClick={() => setCompanyEditor({ company, focusField: 'companyName' })}>
               编辑
             </button>
-            <button className="rt-action-button is-danger" type="button" onClick={() => openCompanyDelete(company)}>
-              删除
-            </button>
+            {activeTab === 'recruitment' ? (
+              <button className="rt-table-action is-delete" type="button" onClick={() => openCompanyDelete(company)}>
+                删除
+              </button>
+            ) : null}
           </>
+        )}
+        renderCompanyField={(company, field, value) => (
+          <button
+            className="rt-editable-field"
+            type="button"
+            aria-label={`编辑${field === 'industryType' ? '行业类型' : field === 'recruitmentBatch' ? '招聘批次' : '优先度'}：${value}`}
+            onClick={() => setCompanyEditor({ company, focusField: field })}
+          >
+            {value}
+          </button>
         )}
         renderApplicationActions={(application) => (
           <>
@@ -755,21 +805,14 @@ export function DashboardApp({
               ))}
             </select>
             <button
-              className="rt-action-button"
-              type="button"
-              onClick={() => setProgressEditor(application)}
-            >
-              编辑进度
-            </button>
-            <button
-              className="rt-action-button is-secondary"
+              className="rt-table-action is-edit"
               type="button"
               onClick={() => setApplicationEditor({ application, companyId: application.companyId })}
             >
               编辑投递
             </button>
             <button
-              className="rt-action-button is-danger"
+              className="rt-table-action is-delete"
               type="button"
               onClick={() => setDeleteTarget({ type: 'application', record: application, applicationCount: 0 })}
             >
@@ -777,12 +820,22 @@ export function DashboardApp({
             </button>
           </>
         )}
+        renderProgressAction={(application) => (
+          <button
+            className="rt-table-action is-apply"
+            type="button"
+            onClick={() => setProgressEditor(application)}
+          >
+            编辑进度
+          </button>
+        )}
       />
 
       {companyEditor ? (
         <CompanyDialog
           open
           company={companyEditor.company}
+          focusField={companyEditor.focusField}
           companyService={companyService}
           onSaved={() => reloadAfterWrite(companyEditor.company ? '公司信息已更新' : '公司招聘信息已保存')}
           onClose={() => setCompanyEditor(null)}

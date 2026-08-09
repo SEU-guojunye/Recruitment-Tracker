@@ -43,7 +43,6 @@ export function PopupApp({
   const [values, setValues] = useState({
     companyName: '',
     recruitmentLink: '',
-    companyNotes: '',
   })
   const [parsing, setParsing] = useState(true)
   const [parseState, setParseState] = useState('loading')
@@ -166,16 +165,6 @@ export function PopupApp({
             placeholder="https://example.com/careers"
           />
         </label>
-        <label>
-          <span>公司备注</span>
-          <textarea
-            maxLength={5000}
-            value={values.companyNotes}
-            onChange={(event) => update('companyNotes', event.target.value)}
-            placeholder="记录招聘入口或关注事项"
-          />
-        </label>
-
         {conflict ? (
           <div className="popup-conflict">
             <p>发现同名候选：{conflict.candidates.map((item) => item.companyName).join('、')}</p>
@@ -209,7 +198,7 @@ export function PopupApp({
       >
         打开 Dashboard <span aria-hidden="true">↗</span>
       </button>
-      {saved ? <p className="popup-next-step">下一步：到“我的投递”新增具体岗位投递。</p> : null}
+      {saved ? <p className="popup-next-step">下一步：到“岗位投递”新增具体岗位投递。</p> : null}
     </main>
   )
 }

@@ -994,6 +994,41 @@ a {
   opacity: 0.5;
 }
 
+.rt-table-action,
+.rt-editable-field {
+  min-height: 28px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--td-radius);
+  color: var(--td-text-secondary);
+  background: transparent;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.rt-table-action:hover,
+.rt-table-action.is-apply,
+.rt-editable-field:hover {
+  color: var(--td-brand-6);
+}
+
+.rt-table-action.is-delete {
+  color: var(--td-error-5);
+}
+
+.rt-table-action:hover,
+.rt-editable-field:hover {
+  background: var(--td-brand-1);
+}
+
+.rt-editable-field {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .rt-dialog-backdrop {
   position: fixed;
   z-index: 100;

@@ -10,7 +10,7 @@
   - Replace the legacy layered visual theme with one TDesign token system.
   - _Requirements: R3, R4, R5_
 
-- [ ] 3. Integrate extension editing workflows
+- [x] 3. Integrate extension editing workflows
   - Add company classification fields, row operations, preselected application creation, and progress/action placement.
   - Preserve CSV, sync, capacity, CRUD, and two-step cascade deletion behavior.
   - _Requirements: R1, R6, R8_

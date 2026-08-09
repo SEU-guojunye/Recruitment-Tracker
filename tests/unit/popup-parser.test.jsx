@@ -53,7 +53,7 @@ describe('Popup company-only capture', () => {
     expect(await screen.findByDisplayValue('示例科技')).toBeInTheDocument()
     expect(screen.getByDisplayValue('https://example.com/jobs/123')).toBeInTheDocument()
     expect(screen.queryByLabelText(/投递时间|工作地点|招聘进度|内推/u)).not.toBeInTheDocument()
-    await user.type(screen.getByLabelText('公司备注'), '关注校招')
+    expect(screen.queryByLabelText('公司备注')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '保存招聘信息' }))
     await screen.findByText(/招聘信息已保存到本地/u)
 
@@ -61,7 +61,10 @@ describe('Popup company-only capture', () => {
     expect(envelope.data.companies).toHaveLength(1)
     expect(envelope.data.companies[0]).toMatchObject({
       companyName: '示例科技',
-      companyNotes: '关注校招',
+      companyNotes: '',
+      industryType: '',
+      recruitmentBatch: '秋招正式批',
+      priority: 'P1',
     })
     expect(envelope.data.applications).toEqual([])
     expect(envelope.sync).toMatchObject({ localRevision: 1, dirty: true })
