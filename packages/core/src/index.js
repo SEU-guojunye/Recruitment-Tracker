@@ -1,4 +1,5 @@
 export * from './constants.js'
+export * from './compatibility.js'
 export * from './csv.js'
 export * from './dates.js'
 export * from './local-envelope.js'

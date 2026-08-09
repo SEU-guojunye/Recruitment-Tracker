@@ -1,4 +1,5 @@
 import { MAX_DATA_BYTES } from './constants.js'
+import { applyDatasetCompatibilityDefaults } from './compatibility.js'
 import {
   AccountBindingError,
   LOCAL_ENVELOPE_KEY,
@@ -68,8 +69,12 @@ export class ChromeLocalRepository {
     const stored = await this.storageArea.get(this.storageKey)
     const existing = stored?.[this.storageKey]
     if (existing !== undefined) {
-      validateEnvelope(existing, { today: this.today })
-      return clone(existing)
+      const compatible = {
+        ...existing,
+        data: applyDatasetCompatibilityDefaults(existing.data),
+      }
+      validateEnvelope(compatible, { today: this.today })
+      return clone(compatible)
     }
 
     const envelope = createDefaultEnvelope({ idFactory: this.idFactory })

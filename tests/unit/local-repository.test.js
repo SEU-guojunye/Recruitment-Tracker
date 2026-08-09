@@ -8,6 +8,7 @@ import {
   UnsupportedSchemaVersionError,
   createApplication,
   createCompanyRecord,
+  createDefaultEnvelope,
 } from '@recruitment-tracker/core'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -92,6 +93,28 @@ describe('ChromeLocalRepository envelope and atomicity', () => {
     )
     expect(storageArea.setCalls).toBe(0)
     expect(storageArea.values[key].schemaVersion).toBe(99)
+  })
+
+  it('reads legacy company records with v1.6 defaults without rewriting storage', async () => {
+    const key = 'recruitmentTrackerEnvelope'
+    const legacyCompany = company({ id: 'company-legacy' })
+    delete legacyCompany.industryType
+    delete legacyCompany.recruitmentBatch
+    delete legacyCompany.priority
+    delete legacyCompany.companyNotes
+    const envelope = createDefaultEnvelope({ idFactory: sequence('legacy-device') })
+    envelope.data.companies.push(legacyCompany)
+    const storageArea = new FakeStorageArea({ [key]: envelope })
+    const repository = createRepository({ storageArea })
+
+    expect((await repository.getData()).companies[0]).toMatchObject({
+      industryType: '',
+      recruitmentBatch: '秋招正式批',
+      priority: 'P1',
+      companyNotes: '',
+    })
+    expect(storageArea.setCalls).toBe(0)
+    expect(storageArea.values[key].data.companies[0]).not.toHaveProperty('industryType')
   })
 
   it('increments revision and dirty state for business writes only', async () => {

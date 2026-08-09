@@ -1,4 +1,5 @@
 import { MODEL_SCHEMA_VERSION } from './constants.js'
+import { applyDatasetCompatibilityDefaults } from './compatibility.js'
 import { UnsupportedSchemaVersionError } from './local-envelope.js'
 import { DomainValidationError, validateDataset } from './validation.js'
 
@@ -41,14 +42,15 @@ export function validateCloudSnapshot(snapshot, options = {}) {
   if (!Number.isSafeInteger(snapshot.sourceRevision) || snapshot.sourceRevision < 0) {
     throw snapshotError('sourceRevision', 'invalid_revision', '云端快照修订号无效')
   }
-  const result = validateDataset(snapshot.data, options)
+  const data = applyDatasetCompatibilityDefaults(snapshot.data)
+  const result = validateDataset(data, options)
   if (!result.valid) throw new DomainValidationError(result.errors)
   return {
     ownerId: snapshot.ownerId,
     schemaVersion: snapshot.schemaVersion,
     sourceDeviceId: snapshot.sourceDeviceId,
     sourceRevision: snapshot.sourceRevision,
-    data: clone(snapshot.data),
+    data: clone(data),
     updatedAt: normalizeUpdatedAt(snapshot.updatedAt),
   }
 }
