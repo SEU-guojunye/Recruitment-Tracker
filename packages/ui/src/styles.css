@@ -454,11 +454,11 @@ a {
 }
 
 .rt-company-list.is-editable {
-  --rt-company-columns: 32px minmax(190px, 1.25fr) minmax(120px, 0.72fr) 86px minmax(280px, 1.9fr) 72px;
+  --rt-company-columns: 32px repeat(5, minmax(0, 1fr));
 }
 
 .rt-company-list.is-readonly {
-  --rt-company-columns: 32px minmax(210px, 1.35fr) minmax(128px, 0.72fr) 90px minmax(300px, 2fr);
+  --rt-company-columns: 32px repeat(4, minmax(0, 1fr));
 }
 
 .rt-company-list__head,
@@ -483,16 +483,13 @@ a {
 .rt-company-list__head > span {
   min-width: 0;
   overflow: hidden;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.rt-company-list__head > span:nth-child(4) {
-  text-align: center;
-}
-
 .rt-company-list.is-editable .rt-company-list__head > span:last-child {
-  text-align: right;
+  text-align: center;
 }
 
 .rt-company-card {
@@ -514,6 +511,10 @@ a {
   padding: 9px 14px;
   color: var(--td-text-primary);
   font-size: 13px;
+}
+
+.rt-company-card__head > .rt-company-identity {
+  justify-content: center;
 }
 
 .rt-expand-button {
@@ -607,6 +608,7 @@ a {
 .rt-recruitment-cell {
   min-width: 0;
   overflow: hidden;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -627,6 +629,10 @@ a {
 
 .rt-applied-jobs {
   color: var(--td-text-primary);
+}
+
+.rt-company-card__head > .rt-row-actions {
+  justify-content: center;
 }
 
 .rt-company-link,
@@ -690,17 +696,19 @@ a {
 }
 
 .rt-application-info-grid.is-readonly {
-  grid-template-columns: minmax(210px, 1.45fr) minmax(110px, 0.72fr) minmax(130px, 0.9fr) minmax(100px, 0.7fr) minmax(112px, 0.72fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .rt-application-info-grid.is-editable {
-  grid-template-columns: minmax(190px, 1.45fr) minmax(100px, 0.72fr) minmax(116px, 0.85fr) minmax(92px, 0.65fr) minmax(110px, 0.72fr) minmax(112px, 0.72fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .rt-application-cell {
   display: grid;
   gap: 4px;
   min-width: 0;
+  justify-items: center;
+  text-align: center;
 }
 
 .rt-application-cell > span:first-child {
@@ -728,16 +736,16 @@ a {
 }
 
 .rt-application-cell--actions {
-  justify-items: end;
+  justify-items: center;
 }
 
 .rt-application-cell--actions > span:first-child {
   width: 100%;
-  text-align: right;
+  text-align: center;
 }
 
 .rt-application-cell--actions .rt-row-actions {
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .rt-timeline-wrap {
@@ -853,11 +861,11 @@ a {
 }
 
 .rt-recruitment-list.is-editable {
-  --rt-recruitment-columns: minmax(170px, 1.35fr) minmax(84px, 0.75fr) minmax(100px, 0.9fr) 58px minmax(92px, 0.78fr) 82px 96px 126px;
+  --rt-recruitment-columns: repeat(8, minmax(0, 1fr));
 }
 
 .rt-recruitment-list.is-readonly {
-  --rt-recruitment-columns: minmax(190px, 1.55fr) minmax(92px, 0.78fr) minmax(112px, 1fr) 62px minmax(104px, 0.85fr) 88px 100px;
+  --rt-recruitment-columns: repeat(7, minmax(0, 1fr));
 }
 
 .rt-recruitment-list__head,
@@ -887,11 +895,6 @@ a {
   white-space: nowrap;
 }
 
-.rt-recruitment-list__head > span:first-child,
-.rt-recruitment-list__head > span:nth-child(5) {
-  text-align: left;
-}
-
 .rt-recruitment-row {
   min-height: 64px;
   border-right: 1px solid var(--td-border);
@@ -916,9 +919,16 @@ a {
   text-align: center;
 }
 
-.rt-recruitment-row > .rt-company-identity,
-.rt-recruitment-row > .rt-recruitment-cell--link {
-  text-align: left;
+.rt-recruitment-row > .rt-company-identity {
+  justify-content: center;
+}
+
+.rt-recruitment-row > .rt-recruitment-cell--link .rt-company-link {
+  justify-self: center;
+}
+
+.rt-recruitment-row > .rt-row-actions {
+  justify-content: center;
 }
 
 .rt-recruitment-value,
@@ -1306,26 +1316,36 @@ a {
   }
 
   .rt-company-list.is-editable {
-    --rt-company-columns: 32px minmax(160px, 1.2fr) 108px 76px minmax(220px, 1.55fr) 68px;
+    --rt-company-columns: 32px repeat(5, minmax(0, 1fr));
   }
 
   .rt-company-list.is-readonly {
-    --rt-company-columns: 32px minmax(180px, 1.25fr) 108px 76px minmax(240px, 1.7fr);
+    --rt-company-columns: 32px repeat(4, minmax(0, 1fr));
   }
 
   .rt-application-info-grid.is-readonly {
-    grid-template-columns: minmax(170px, 1.35fr) repeat(4, minmax(96px, 0.8fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 14px;
   }
 
   .rt-application-info-grid.is-editable {
-    grid-template-columns: minmax(160px, 1.35fr) minmax(92px, 0.75fr) minmax(100px, 0.8fr) 84px 100px 108px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
   }
 
   .rt-recruitment-list__head,
   .rt-recruitment-row {
     gap: 8px;
+  }
+
+  .rt-recruitment-row > .rt-row-actions {
+    gap: 2px;
+  }
+
+  .rt-recruitment-row > .rt-row-actions .rt-table-action {
+    padding-right: 0;
+    padding-left: 0;
+    font-size: 12px;
   }
 }
 
@@ -1363,10 +1383,12 @@ a {
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-company-identity {
     grid-column: 2 / 4;
+    justify-content: flex-start;
   }
 
   .rt-company-list.is-readonly .rt-company-card__head > .rt-company-identity {
     grid-column: 2 / -1;
+    justify-content: flex-start;
   }
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-row-actions {
@@ -1376,7 +1398,9 @@ a {
 
   .rt-company-summary-cell {
     display: grid;
+    justify-items: start;
     gap: 3px;
+    text-align: left;
   }
 
   .rt-company-summary-cell::before {
@@ -1404,6 +1428,15 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .rt-application-cell {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .rt-application-cell .rt-application-link {
+    justify-self: start;
+  }
+
   .rt-recruitment-list {
     display: grid;
     gap: 10px;
@@ -1425,6 +1458,7 @@ a {
 
   .rt-recruitment-row > .rt-company-identity {
     grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 
   .rt-recruitment-row > .rt-row-actions {
@@ -1443,6 +1477,10 @@ a {
 
   .rt-recruitment-cell::before {
     display: block;
+  }
+
+  .rt-recruitment-row > .rt-recruitment-cell--link .rt-company-link {
+    justify-self: start;
   }
 }
 

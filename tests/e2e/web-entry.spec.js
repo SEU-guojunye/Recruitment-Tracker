@@ -126,3 +126,67 @@ test('company summary columns are equal and evenly spaced on mobile', async ({ p
     columnGap: '12px',
   })
 })
+
+test('readonly desktop lists use equal semantic columns and evenly spaced anchors', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/')
+
+  await expect(page.locator('.rt-application-info-grid').first()).toBeVisible()
+  const applicationLayout = await page.locator('.rt-application-info-grid').first().evaluate((grid) => {
+    const widths = getComputedStyle(grid).gridTemplateColumns
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
+    return {
+      columnCount: widths.length,
+      widthDelta: Math.max(...widths) - Math.min(...widths),
+    }
+  })
+  expect(applicationLayout.columnCount).toBe(5)
+  expect(applicationLayout.widthDelta).toBeLessThanOrEqual(1)
+
+  const companyLayout = await page.locator('.rt-company-list__head').evaluate((head) => {
+    const widths = getComputedStyle(head).gridTemplateColumns
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
+      .slice(1)
+    const centers = [...head.children]
+      .slice(1)
+      .map((cell) => {
+        const rect = cell.getBoundingClientRect()
+        return rect.left + rect.width / 2
+      })
+    const intervals = centers.slice(1).map((center, index) => center - centers[index])
+    return {
+      semanticColumnCount: widths.length,
+      widthDelta: Math.max(...widths) - Math.min(...widths),
+      intervalDelta: Math.max(...intervals) - Math.min(...intervals),
+    }
+  })
+  expect(companyLayout).toEqual({
+    semanticColumnCount: 4,
+    widthDelta: 0,
+    intervalDelta: 0,
+  })
+
+  await page.getByRole('tab', { name: /招聘信息/u }).click()
+  const recruitmentLayout = await page.locator('.rt-recruitment-list__head').evaluate((head) => {
+    const widths = getComputedStyle(head).gridTemplateColumns
+      .split(' ')
+      .map((value) => Number.parseFloat(value))
+    const centers = [...head.children].map((cell) => {
+      const rect = cell.getBoundingClientRect()
+      return rect.left + rect.width / 2
+    })
+    const intervals = centers.slice(1).map((center, index) => center - centers[index])
+    return {
+      columnCount: widths.length,
+      widthDelta: Math.max(...widths) - Math.min(...widths),
+      intervalDelta: Math.max(...intervals) - Math.min(...intervals),
+      alignments: [...head.children].map((cell) => getComputedStyle(cell).textAlign),
+    }
+  })
+  expect(recruitmentLayout.columnCount).toBe(7)
+  expect(recruitmentLayout.widthDelta).toBeLessThanOrEqual(1)
+  expect(recruitmentLayout.intervalDelta).toBeLessThanOrEqual(1)
+  expect(recruitmentLayout.alignments).toEqual(Array(7).fill('center'))
+})

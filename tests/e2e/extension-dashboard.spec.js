@@ -106,8 +106,47 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await expect(page.locator('.rt-company-list__head')).toHaveCSS('font-weight', '600')
     await expect(applicationCard.locator('.rt-application-cell').first().locator('span').first())
       .toHaveCSS('font-weight', '600')
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    const editableApplicationWidths = await applicationCard.locator('.rt-application-info-grid').evaluate(
+      (grid) => getComputedStyle(grid).gridTemplateColumns
+        .split(' ')
+        .map((value) => Number.parseFloat(value)),
+    )
+    expect(editableApplicationWidths).toHaveLength(6)
+    expect(Math.max(...editableApplicationWidths) - Math.min(...editableApplicationWidths))
+      .toBeLessThanOrEqual(1)
+    const editableCompanyWidths = await page.locator('.rt-company-list__head').evaluate(
+      (head) => getComputedStyle(head).gridTemplateColumns
+        .split(' ')
+        .map((value) => Number.parseFloat(value))
+        .slice(1),
+    )
+    expect(editableCompanyWidths).toHaveLength(5)
+    expect(Math.max(...editableCompanyWidths) - Math.min(...editableCompanyWidths))
+      .toBeLessThanOrEqual(1)
     await page.getByRole('tab', { name: /招聘信息/u }).click()
     await expect(page.locator('.rt-recruitment-list__head')).toHaveCSS('font-weight', '600')
+    const editableRecruitmentLayout = await page.locator('.rt-recruitment-list__head').evaluate((head) => {
+      const widths = getComputedStyle(head).gridTemplateColumns
+        .split(' ')
+        .map((value) => Number.parseFloat(value))
+      const centers = [...head.children].map((cell) => {
+        const rect = cell.getBoundingClientRect()
+        return rect.left + rect.width / 2
+      })
+      const intervals = centers.slice(1).map((center, index) => center - centers[index])
+      return {
+        widths,
+        intervals,
+        alignments: [...head.children].map((cell) => getComputedStyle(cell).textAlign),
+      }
+    })
+    expect(editableRecruitmentLayout.widths).toHaveLength(8)
+    expect(Math.max(...editableRecruitmentLayout.widths) - Math.min(...editableRecruitmentLayout.widths))
+      .toBeLessThanOrEqual(1)
+    expect(Math.max(...editableRecruitmentLayout.intervals) - Math.min(...editableRecruitmentLayout.intervals))
+      .toBeLessThanOrEqual(1)
+    expect(editableRecruitmentLayout.alignments).toEqual(Array(8).fill('center'))
     await page.getByRole('tab', { name: /岗位投递/u }).click()
     await expect(page.locator('.rt-company-logo img')).toHaveAttribute('src', /sz=128$/u)
     const stored = await page.evaluate(async () => {
