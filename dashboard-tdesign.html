@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Recruitment Tracker · TDesign inspired dashboard prototype" />
+  <title>Recruitment Tracker · TDesign Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://ico.faviconkit.net" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* TDesign-inspired semantic tokens. Brand blue follows TDesign's default #0052D9 theme. */
+      --td-brand-color-1: #f2f3ff;
+      --td-brand-color-2: #d9e8ff;
+      --td-brand-color-3: #b5c7e7;
+      --td-brand-color-6: #0052d9;
+      --td-brand-color-7: #003cab;
+      --td-brand-color-8: #266fe8;
+      --td-success-color-1: #e8f8f2;
+      --td-success-color-5: #00a870;
+      --td-warning-color-1: #fff1e9;
+      --td-warning-color-5: #ed7b2f;
+      --td-error-color-1: #fdecee;
+      --td-error-color-5: #d54941;
+      --td-gray-color-1: #f3f3f3;
+      --td-gray-color-2: #eeeeee;
+      --td-gray-color-3: #e7e7e7;
+      --td-gray-color-4: #dcdcdc;
+      --td-gray-color-6: #a6a6a6;
+      --td-gray-color-7: #777777;
+      --td-gray-color-8: #5e5e5e;
+      --td-gray-color-9: #333333;
+      --td-gray-color-10: #222222;
+      --td-bg-page: #f3f3f3;
+      --td-bg-container: #ffffff;
+      --td-bg-container-hover: #f3f3f3;
+      --td-text-primary: #1d2129;
+      --td-text-secondary: #4e5969;
+      --td-text-placeholder: #86909c;
+      --td-border: #e7e7e7;
+      --td-focus: rgba(0, 82, 217, .18);
+      --td-radius-small: 3px;
+      --td-radius-default: 6px;
+      --td-radius-large: 9px;
+      --td-shadow-1: 0 1px 4px rgba(0, 0, 0, .06);
+      --td-shadow-2: 0 4px 16px rgba(0, 0, 0, .08);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--td-bg-page); }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--td-text-primary);
+      background: var(--td-bg-page);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--td-focus); outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .icon { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .icon--sm { width: 15px; height: 15px; }
+    .icon--lg { width: 22px; height: 22px; }
+    .page-head > div, .panel-head > div, .metric-card { min-width: 0; }
+    .view-tabs button, .tab-badge, .header-action, .avatar, .button, .page-head h1, .page-head p, .metric-label > span:first-child, .metric-value, .metric-note, .panel-title, .panel-subtitle, .panel-status, .toolbar-count, .company-list-head > span, .company-name, .company-link, .summary-label, .company-summary-count, .applied-job-list, .field-label, .field-value, .tag, .count, .details-head strong, .details-head span, .application-column-label, .application-title, .application-value, .application-link, .timeline-title, .timeline-label, .recruitment-row--head > span, .mobile-label, .recruitment-link, .editable-field-value, .table-action, .empty strong, .empty p, .toast { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .skip-link { position: fixed; z-index: 20; top: 12px; left: 12px; padding: 8px 12px; border-radius: var(--td-radius-default); color: #fff; background: var(--td-gray-color-10); opacity: 0; pointer-events: none; transform: translateY(-160%); transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
+    .skip-link:focus-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+    .app-layout { display: block; min-height: 100vh; }
+    .sync-dot { width: 7px; height: 7px; flex: 0 0 auto; margin-top: 5px; border-radius: 50%; background: var(--td-success-color-5); box-shadow: 0 0 0 3px var(--td-success-color-1); }
+    .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--td-brand-color-7); background: var(--td-brand-color-2); font-size: 12px; font-weight: 700; }
+
+    .main-area { min-width: 0; }
+    .topbar { position: sticky; z-index: 10; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 64px; padding: 0 28px; border-bottom: 1px solid var(--td-border); background: rgba(255, 255, 255, .96); box-shadow: 0 1px 6px rgba(0, 0, 0, .04); backdrop-filter: blur(12px); }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .header-action { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 9px; border: 1px solid transparent; border-radius: var(--td-radius-default); color: var(--td-text-secondary); background: transparent; font-size: 12px; }
+    .header-action:hover { color: var(--td-brand-color-6); background: var(--td-brand-color-1); }
+    .topbar .avatar { margin-left: 4px; }
+    .content { width: min(100%, 1600px); margin: 0 auto; padding: 28px 32px 56px; }
+
+    .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+    .page-head h1 { margin: 0; color: var(--td-text-primary); font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
+    .page-head p { margin: 7px 0 0; color: var(--td-text-secondary); font-size: 14px; }
+    .page-head-actions { display: flex; align-items: center; gap: 8px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 15px; border: 1px solid transparent; border-radius: var(--td-radius-default); font-size: 13px; font-weight: 600; transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease); }
+    .button--primary { color: #fff; background: var(--td-brand-color-6); }
+    .button--primary:hover { background: var(--td-brand-color-7); box-shadow: 0 4px 10px rgba(0, 82, 217, .16); }
+    .button--default { color: var(--td-text-secondary); border-color: var(--td-border); background: var(--td-bg-container); }
+    .button--default:hover { color: var(--td-brand-color-6); border-color: var(--td-brand-color-3); background: var(--td-brand-color-1); }
+    .button--text { min-height: 30px; padding: 0 8px; color: var(--td-brand-color-6); background: transparent; }
+    .button--text:hover { background: var(--td-brand-color-1); }
+    .table-action { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 4px; border: 0; border-radius: 0; background: transparent; font-size: 13px; font-weight: 600; transition: color 160ms var(--ease), opacity 160ms var(--ease); }
+    .table-action:hover { background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+    .table-action--apply { color: var(--td-brand-color-6); }
+    .table-action--edit { color: var(--td-text-secondary); }
+    .table-action--delete { color: var(--td-error-color-5); }
+
+    .view-tabs { display: flex; align-items: center; align-self: stretch; gap: 30px; min-height: 64px; margin: 0; border: 0; }
+    .view-tabs button { position: relative; display: inline-flex; align-items: center; gap: 8px; align-self: stretch; min-width: 96px; padding: 0 4px; border: 0; color: var(--td-text-secondary); background: transparent; font-size: 15px; font-weight: 500; }
+    .view-tabs button:hover { color: var(--td-brand-color-6); }
+    .view-tabs button.is-active { color: var(--td-brand-color-6); font-weight: 600; }
+    .view-tabs button.is-active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--td-brand-color-6); content: ""; }
+    .tab-badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; color: var(--td-text-secondary); background: var(--td-gray-color-2); font-size: 11px; font-weight: 600; }
+    .view-tabs button.is-active .tab-badge { color: var(--td-brand-color-7); background: var(--td-brand-color-2); }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .metric-card { min-width: 0; padding: 16px 18px; border: 1px solid var(--td-brand-color-2); border-left: 3px solid var(--td-brand-color-6); border-radius: var(--td-radius-default); background: var(--td-bg-container); box-shadow: 0 1px 4px rgba(0, 82, 217, .08); transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease); }
+    .metric-card:hover { border-color: var(--td-brand-color-3); border-left-color: var(--td-brand-color-6); box-shadow: 0 4px 12px rgba(0, 82, 217, .12); }
+    .metric-label { display: flex; align-items: center; justify-content: space-between; color: var(--td-text-secondary); font-size: 12px; }
+    .metric-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--td-radius-default); color: var(--td-brand-color-6); background: var(--td-brand-color-1); }
+    .metric-value { margin-top: 13px; color: var(--td-text-primary); font-size: 24px; font-weight: 700; letter-spacing: -.04em; }
+    .metric-value small { margin-left: 4px; color: var(--td-text-secondary); font-size: 11px; font-weight: 400; letter-spacing: 0; }
+    .metric-note { margin: 5px 0 0; color: var(--td-text-placeholder); font-size: 10px; }
+    .metric-note strong { color: var(--td-success-color-5); font-weight: 600; }
+    .metrics--applications .metric-card, .metrics--recruitment .metric-card { border: 1px solid var(--td-border); box-shadow: var(--td-shadow-1); }
+    .metrics--applications .metric-card:hover, .metrics--recruitment .metric-card:hover { border-color: var(--td-gray-color-4); box-shadow: var(--td-shadow-2); }
+    .metrics--applications .metric-label, .metrics--recruitment .metric-label { color: var(--td-brand-color-6); font-size: 13px; font-weight: 600; }
+    .metrics--applications .metric-icon, .metrics--recruitment .metric-icon { width: 32px; height: 32px; }
+    .metrics--applications .metric-value, .metrics--recruitment .metric-value { color: var(--td-text-primary); font-size: 26px; }
+    .metrics--applications .metric-value small, .metrics--recruitment .metric-value small { color: var(--td-text-secondary); }
+    .metrics--applications .metric-note, .metrics--recruitment .metric-note { color: var(--td-text-placeholder); }
+    .metrics--applications .metric-note strong { color: var(--td-text-placeholder); }
+    .metrics--applications .metric-value small, .metrics--applications .metric-note, .metrics--recruitment .metric-value small, .metrics--recruitment .metric-note { font-size: 12px; }
+
+    .panel { overflow: hidden; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); background: var(--td-bg-container); box-shadow: var(--td-shadow-1); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 20px 15px; }
+    .panel-title { margin: 0; color: var(--td-text-primary); font-size: 18px; font-weight: 600; }
+    .panel-subtitle { margin: 5px 0 0; color: var(--td-text-secondary); font-size: 13px; }
+    .panel-status { display: inline-flex; align-items: center; gap: 6px; color: var(--td-text-secondary); font-size: 13px; white-space: nowrap; }
+    .panel-status .sync-dot { margin: 0; }
+    .panel-head--search { align-items: center; }
+    .panel-search-wrap { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
+    .panel-head--search .search { display: block; width: min(100%, 280px); }
+    .recruitment-filters, .application-filters { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+    .recruitment-filters label, .application-filters label { min-width: 0; }
+    .panel-head-meta { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--td-border); border-bottom: 1px solid var(--td-border); background: var(--td-gray-color-1); }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .toolbar-left { flex: 1 1 auto; }
+    .search { position: relative; width: min(100%, 360px); }
+    .search .icon { position: absolute; top: 50%; left: 10px; color: var(--td-text-placeholder); transform: translateY(-50%); pointer-events: none; }
+    .search input, .select { width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); outline: none; color: var(--td-text-primary); background: var(--td-bg-container); font-size: 13px; transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease), background-color 160ms var(--ease); }
+    .search input { padding-left: 34px; }
+    .search input::placeholder { color: var(--td-text-placeholder); }
+    .search input:focus, .select:focus { border-color: var(--td-brand-color-6); box-shadow: 0 0 0 3px var(--td-focus); }
+    .select { min-width: 126px; padding-right: 28px; }
+    .toolbar-count { color: var(--td-text-secondary); font-size: 12px; white-space: nowrap; }
+    .toolbar-count strong { color: var(--td-text-primary); font-weight: 600; }
+
+    .company-list { --company-summary-columns: 32px minmax(190px, 1.25fr) minmax(116px, .6fr) minmax(82px, .55fr) minmax(250px, 1.6fr) 88px; display: grid; gap: 8px; padding: 14px 20px 20px; }
+    .company-list-head { display: grid; grid-template-columns: var(--company-summary-columns); align-items: center; gap: 12px; min-height: 42px; padding: 8px 15px; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 500; }
+    .company-list-head > span { min-width: 0; }
+    .company-list-head > span:nth-child(2), .company-list-head > span:nth-child(3), .company-list-head > span:nth-child(4), .company-list-head > span:nth-child(5) { display: flex; align-items: center; color: inherit; font-weight: inherit; }
+    .company-list-head > span:nth-child(4) { justify-content: center; text-align: center; }
+    .company-list-head > span:last-child { text-align: right; }
+    .company-card { overflow: hidden; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); background: var(--td-bg-container); transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease); }
+    .company-card:hover, .company-card.is-open { border-color: var(--td-brand-color-3); box-shadow: var(--td-shadow-1); }
+    .company-head { display: grid; grid-template-columns: var(--company-summary-columns); align-items: center; gap: 12px; min-height: 64px; padding: 9px 14px; color: var(--td-text-primary); font-size: 13px; }
+    .expand { display: grid; place-items: center; width: 32px; height: 34px; padding: 0; border: 0; border-radius: var(--td-radius-default); color: var(--td-text-secondary); background: transparent; }
+    .expand:hover { color: var(--td-brand-color-6); background: var(--td-brand-color-1); }
+    .expand .icon { transition: transform 160ms var(--ease); }
+    .company-card.is-open .expand .icon { transform: rotate(90deg); }
+    .company-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .company-logo { position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; overflow: hidden; border: 0; border-radius: var(--td-radius-default); background: transparent; box-shadow: none; font-size: 12px; font-weight: 700; }
+    .company-logo span { position: relative; z-index: 0; opacity: 0; transition: opacity 160ms var(--ease); }
+    .company-logo img { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; border-radius: var(--td-radius-default); background: transparent; object-fit: contain; opacity: 0; transition: opacity 160ms var(--ease); }
+    .logo-blue { color: var(--td-brand-color-7); }
+    .logo-green { color: #087f5b; }
+    .logo-orange { color: #b85c19; }
+    .logo-red { color: #ad3e37; }
+    .company-copy { min-width: 0; }
+    .company-name { display: block; overflow: hidden; color: var(--td-text-primary); font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .company-link { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; margin-top: 3px; overflow: hidden; color: var(--td-brand-color-6); font-size: 12px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+    .company-link:hover { text-decoration: underline; }
+    .company-summary-cell { min-width: 0; }
+    .summary-label, .application-column-label { display: none; color: var(--td-text-placeholder); font-size: 12px; font-weight: 400; }
+    .company-head .company-logo { width: 34px; height: 34px; }
+    .company-head .company-copy { display: grid; align-content: center; height: 34px; }
+    .company-head .company-name { font-size: 13px; line-height: 20px; }
+    .company-summary-link .company-link { margin-top: 0; color: var(--td-brand-color-6); font-size: 13px; font-weight: 400; line-height: 20px; }
+    .company-summary-link .company-link:hover { color: var(--td-brand-color-8); }
+    .applied-job-list { display: block; min-width: 0; overflow: hidden; color: var(--td-text-primary); font-size: 13px; font-weight: 400; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+    .applied-job-list span { min-width: 0; }
+    .applied-job-list span:not(:last-child)::after { margin-right: 2px; color: var(--td-text-placeholder); content: "、"; }
+    .company-summary-count { color: var(--td-text-primary); font-size: 13px; font-weight: 400; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+    .field-label { display: block; margin-bottom: 4px; color: var(--td-text-placeholder); font-size: 12px; }
+    .field-value { display: block; overflow: hidden; color: var(--td-text-secondary); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; width: fit-content; padding: 4px 9px; border-radius: var(--td-radius-small); font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .tag::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .tag--brand { color: var(--td-brand-color-7); background: var(--td-brand-color-1); }
+    .tag--success { color: #087f5b; background: var(--td-success-color-1); }
+    .tag--warning { color: #b85c19; background: var(--td-warning-color-1); }
+    .tag--error { color: #ad3e37; background: var(--td-error-color-1); }
+    .tag--gray { color: var(--td-text-secondary); background: var(--td-gray-color-2); }
+    .actions { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+    .actions .button { min-height: 32px; padding: 0 9px; font-size: 12px; }
+    .company-head .table-action { font-weight: 500; }
+    .company-details { display: none; padding: 0 15px 15px 59px; border-top: 1px solid var(--td-border); background: #fbfbfc; }
+    .company-card.is-open .company-details { display: block; animation: show-details 180ms var(--ease); }
+    @keyframes show-details { from { opacity: .5; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+    .details-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 0 10px; }
+    .details-head strong { color: var(--td-text-primary); font-size: 14px; font-weight: 600; }
+    .details-head span { color: var(--td-text-placeholder); font-size: 12px; }
+    .applications-table { background: transparent; }
+    .applications { display: grid; }
+    .application { padding: 20px 0 22px; border-top: 1px solid var(--td-border); background: transparent; font-size: 13px; }
+    .application:first-child { border-top: 0; }
+    .application-info-grid { display: grid; grid-template-columns: minmax(180px, 1.25fr) repeat(4, minmax(120px, 1fr)); align-items: end; gap: 18px; }
+    .application-cell { min-width: 0; text-align: left; }
+    .application .application-column-label { display: block; margin-bottom: 10px; color: var(--td-text-secondary); font-size: 13px; }
+    .application-title { display: block; overflow: hidden; color: var(--td-brand-color-6); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .application-value { display: block; overflow: hidden; color: var(--td-text-primary); font-size: 13px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .application-link { display: inline-flex; align-items: center; gap: 3px; color: var(--td-brand-color-6); font-size: 13px; text-decoration: none; white-space: nowrap; }
+    .application-link:hover { text-decoration: underline; }
+    .timeline-section { margin-top: 18px; }
+    .timeline-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 11px; }
+    .timeline-title { display: block; color: var(--td-text-secondary); font-size: 13px; line-height: 22px; }
+    .timeline-edit { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; padding: 0 9px; border: 0; border-radius: var(--td-radius-default); color: var(--td-brand-color-6); background: transparent; font-size: 13px; font-weight: 500; white-space: nowrap; }
+    .timeline-edit:hover { color: var(--td-brand-color-8); background: var(--td-brand-color-1); }
+    .timeline { display: flex; width: 100%; min-width: 0; }
+    .timeline-step { position: relative; display: grid; grid-template-rows: 22px auto; flex: 1 1 0; min-width: 0; text-align: center; }
+    .timeline-step:not(:last-child)::after { position: absolute; z-index: 0; top: 9px; left: calc(50% + 11px); right: calc(-50% + 11px); height: 4px; border-radius: 2px; background: var(--td-gray-color-4); content: ""; }
+    .timeline-step.is-done:not(:last-child)::after { background: var(--td-brand-color-6); }
+    .timeline-dot { position: relative; z-index: 1; display: grid; place-items: center; justify-self: center; width: 22px; height: 22px; border: 1px solid var(--td-text-placeholder); border-radius: 50%; color: var(--td-text-placeholder); background: var(--td-bg-container); }
+    .timeline-dot .icon { width: 12px; height: 12px; stroke-width: 2.2; }
+    .timeline-step.is-done .timeline-dot { border-color: var(--td-brand-color-6); color: #fff; background: var(--td-brand-color-6); }
+    .timeline-step.is-current .timeline-dot { border-color: var(--td-brand-color-6); color: #fff; background: var(--td-brand-color-6); box-shadow: 0 0 0 4px var(--td-brand-color-1); }
+    .timeline-step.is-current .timeline-dot::after { width: 6px; height: 6px; border-radius: 50%; background: #fff; content: ""; }
+    .timeline-label { margin-top: 6px; overflow: hidden; color: var(--td-text-placeholder); font-size: 12px; font-weight: 400; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+    .timeline-step.is-done .timeline-label { color: var(--td-text-primary); }
+    .timeline-step.is-current .timeline-label { color: var(--td-brand-color-6); font-weight: 500; }
+
+    .recruitment-list { padding: 14px 20px 20px; }
+    .recruitment-table { --recruitment-columns: minmax(148px, 1.55fr) minmax(72px, .8fr) minmax(90px, 1.05fr) minmax(48px, .48fr) minmax(72px, .78fr) minmax(56px, .58fr) minmax(76px, .8fr) minmax(84px, .88fr); overflow: hidden; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); }
+    .recruitment-row { display: grid; grid-template-columns: var(--recruitment-columns); align-items: center; gap: 12px; min-height: 64px; padding: 9px 14px; border-bottom: 1px solid var(--td-border); color: var(--td-text-primary); background: var(--td-bg-container); font-size: 13px; text-align: left; transition: background-color 160ms var(--ease); }
+    .recruitment-row:last-child { border-bottom: 0; }
+    .recruitment-row--head { min-height: 42px; color: var(--td-text-placeholder); background: var(--td-gray-color-1); font-size: 13px; font-weight: 500; }
+    .recruitment-row:not(.recruitment-row--head):hover { background: var(--td-bg-container-hover); }
+    .recruitment-row > * { width: 100%; min-width: 0; justify-self: stretch; text-align: center; }
+    .recruitment-row > :first-child { text-align: left; }
+    .recruitment-row--head > span { display: flex; align-items: center; justify-content: center; }
+    .recruitment-row--head > span:first-child { justify-content: flex-start; }
+    .recruitment-row--head > span:nth-child(5) { justify-content: flex-start; text-align: left; }
+    .recruitment-row .company-logo { width: 34px; height: 34px; }
+    .recruitment-row .company-copy { display: grid; align-content: center; gap: 2px; height: 34px; }
+    .recruitment-row .company-name { font-size: 13px; font-weight: 600; line-height: 20px; }
+    .recruitment-cell { display: grid; justify-items: center; gap: 4px; min-width: 0; }
+    .recruitment-cell--link { justify-items: start; text-align: left; }
+    .recruitment-row .field-value, .count { color: var(--td-text-primary); font-size: 13px; font-weight: 400; line-height: 20px; font-variant-numeric: tabular-nums; }
+    .mobile-label { display: none; color: var(--td-text-placeholder); font-size: 13px; }
+    .recruitment-link { display: inline-flex; align-items: center; gap: 4px; color: var(--td-brand-color-6); font-size: 13px; font-weight: 400; line-height: 20px; text-decoration: none; white-space: nowrap; }
+    .recruitment-link .icon { width: 12px; height: 12px; }
+    .recruitment-link:hover { color: var(--td-brand-color-8); text-decoration: underline; }
+    .editable-field-value { display: inline-flex; align-items: center; max-width: 100%; min-height: 20px; padding: 0; overflow: hidden; border: 0; color: var(--td-text-primary); background: transparent; font-size: 13px; font-weight: 400; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .editable-field-value:hover { color: var(--td-brand-color-6); text-decoration: underline; }
+    .editable-field-value:focus-visible { outline: 2px solid var(--td-focus); outline-offset: 2px; }
+    .recruitment-row > .actions { justify-content: center; gap: 8px; }
+    .recruitment-row .table-action { font-weight: 500; }
+    .empty { display: none; padding: 46px 20px; color: var(--td-text-secondary); text-align: center; }
+    .empty.is-visible { display: block; }
+    .empty .icon { margin-bottom: 8px; color: var(--td-brand-color-6); }
+    .empty strong { display: block; color: var(--td-text-primary); font-size: 13px; font-weight: 600; }
+    .empty p { margin: 4px 0 0; font-size: 11px; }
+    .toast { position: fixed; z-index: 30; right: 22px; bottom: 22px; display: flex; align-items: center; gap: 7px; max-width: min(360px, calc(100vw - 30px)); padding: 10px 13px; border: 1px solid var(--td-brand-color-3); border-radius: var(--td-radius-default); color: var(--td-brand-color-7); background: var(--td-brand-color-1); box-shadow: var(--td-shadow-2); font-size: 11px; font-weight: 600; opacity: 0; pointer-events: none; transform: translateY(7px); transition: opacity 160ms var(--ease), transform 160ms var(--ease); }
+    .toast.is-visible { opacity: 1; transform: translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+    @media (max-width: 1120px) {
+      .company-list { --company-summary-columns: 32px minmax(150px, 1.15fr) minmax(104px, .65fr) minmax(70px, .55fr) minmax(180px, 1.45fr) 76px; }
+      .company-list-head, .company-head { gap: 8px; }
+      .application-info-grid { grid-template-columns: minmax(150px, 1.25fr) repeat(4, minmax(100px, 1fr)); gap: 14px; }
+      .recruitment-row { gap: 8px; }
+      .recruitment-row > .actions { gap: 4px; }
+      .recruitment-row .table-action { padding-right: 2px; padding-left: 2px; }
+    }
+    @media (max-width: 860px) {
+      .app-layout { display: block; }
+      .topbar { min-height: 58px; padding: 0 18px; }
+      .view-tabs { min-height: 58px; }
+      .view-tabs button { min-width: 92px; font-size: 14px; }
+      .content { padding: 20px 18px 42px; }
+      .panel-head--search .search { width: min(100%, 220px); }
+      .panel-head--search .recruitment-filters .select, .panel-head--search .application-filters .select { min-width: 110px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .company-list-head { display: none; }
+      .company-head { grid-template-columns: 28px repeat(2, minmax(0, 1fr)) auto; grid-template-rows: auto auto auto; gap: 10px; min-height: 0; padding: 12px; }
+      .company-head > .expand { grid-column: 1; grid-row: 1; }
+      .company-head > .company-identity { grid-column: 2 / 4; grid-row: 1; }
+      .company-head > .company-summary-link { grid-column: 2; grid-row: 2; }
+      .company-head > .company-summary-count { grid-column: 3; grid-row: 2; text-align: left; }
+      .company-head > .applied-jobs { grid-column: 2 / 5; grid-row: 3; }
+      .company-head > .actions { grid-column: 4; grid-row: 1; }
+      .company-head .summary-label { display: block; margin-bottom: 4px; }
+      .company-details { padding: 0 11px 12px; }
+      .application-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .application-cell--title { grid-column: 1 / -1; }
+      .recruitment-table { overflow: visible; border: 0; }
+      .recruitment-row.recruitment-row--head { display: none; }
+      .recruitment-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-height: 0; padding: 14px; border: 1px solid var(--td-border); border-radius: var(--td-radius-default); }
+      .recruitment-row + .recruitment-row { margin-top: 10px; }
+      .recruitment-row > .company-identity { grid-column: 1 / -1; }
+      .recruitment-row:not(.recruitment-row--head) > .recruitment-cell { justify-items: start; text-align: left; }
+      .recruitment-row > .actions { grid-column: 1 / -1; justify-content: flex-start; padding-top: 10px; border-top: 1px solid var(--td-border); text-align: left; }
+      .recruitment-row .mobile-label { display: block; }
+    }
+    @media (max-width: 640px) {
+      body { font-size: 15px; }
+      .topbar-actions .header-action { display: none; }
+      .topbar { gap: 8px; padding: 0 12px; }
+      .topbar .avatar { width: 28px; height: 28px; margin-left: 0; }
+      .content { padding: 17px 12px 34px; }
+      .page-head { align-items: flex-start; flex-direction: column; gap: 13px; margin-bottom: 16px; }
+      .page-head > div:first-child { width: 100%; }
+      .page-head h1 { font-size: 24px; }
+      .page-head-actions { width: 100%; }
+      .page-head-actions .button { flex: 1; }
+      .view-tabs { gap: 18px; }
+      .view-tabs button { min-width: auto; font-size: 14px; }
+      .metrics { gap: 8px; margin-bottom: 14px; }
+      .metric-card { padding: 12px; }
+      .metric-value { margin-top: 10px; font-size: 21px; }
+      .metric-note { font-size: 9px; }
+      .metrics--applications .metric-label, .metrics--recruitment .metric-label { font-size: 12px; }
+      .metrics--applications .metric-icon, .metrics--recruitment .metric-icon { width: 30px; height: 30px; }
+      .metrics--applications .metric-value, .metrics--recruitment .metric-value { font-size: 22px; }
+      .metrics--applications .metric-value small, .metrics--applications .metric-note, .metrics--recruitment .metric-value small, .metrics--recruitment .metric-note { font-size: 11px; }
+      .panel-head { align-items: flex-start; flex-direction: column; gap: 7px; padding: 14px 13px 12px; }
+      .panel-head--search .panel-search-wrap, .panel-head--search .search { width: 100%; }
+      .panel-head--search .panel-search-wrap { align-items: stretch; flex-wrap: wrap; }
+      .panel-head--search .recruitment-filters, .panel-head--search .application-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+      .panel-head--search .recruitment-filters .select, .panel-head--search .application-filters .select { min-width: 0; }
+      .panel-head-meta { width: 100%; justify-content: space-between; margin-left: 0; }
+      .panel-status { align-self: stretch; justify-content: flex-start; }
+      .toolbar { align-items: stretch; flex-direction: column; padding: 10px 12px; }
+      .toolbar-left, .toolbar-right { width: 100%; }
+      .toolbar-left { flex-direction: column; align-items: stretch; }
+      .toolbar-right { display: grid; grid-template-columns: 1fr 1fr; }
+      .search { width: 100%; }
+      .select { min-width: 0; }
+      .toolbar-count { order: 3; }
+      .company-list, .recruitment-list { padding: 11px 10px 14px; }
+      .company-head .company-edit { min-height: 44px; padding-right: 7px; padding-left: 7px; }
+      .details-head { align-items: flex-start; flex-direction: column; gap: 2px; padding: 12px 0 9px; }
+      .application { padding: 12px; }
+      .application + .application { margin-top: 4px; }
+      .application-info-grid { gap: 14px 10px; }
+      .timeline-edit { min-height: 44px; }
+      .timeline-section { margin-top: 14px; }
+      .timeline-step:not(:last-child)::after { top: 10px; height: 2px; border-radius: 1px; }
+      .timeline-label { padding: 0 2px; font-size: 11px; line-height: 16px; white-space: nowrap; }
+      .recruitment-row { gap: 10px; padding: 12px; }
+      .recruitment-row > .actions { padding-top: 8px; }
+      .recruitment-row > .actions .table-action { min-height: 44px; padding-right: 7px; padding-left: 7px; }
+      .toast { right: 14px; bottom: 14px; }
+    }
+    @media (max-width: 370px) {
+      .content { padding-right: 9px; padding-left: 9px; }
+      .toolbar-right { grid-template-columns: 1fr; }
+      .metric-card { padding-right: 10px; padding-left: 10px; }
+      .metric-label { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳转到主要内容</a>
+  <svg class="sr-only" aria-hidden="true" focusable="false">
+    <symbol id="icon-dashboard" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+    <symbol id="icon-building" viewBox="0 0 24 24"><path d="M4 20h16M6 20V6.5L12 4l6 2.5V20M9 9h1M14 9h1M9 13h1M14 13h1M11 20v-3h2v3"/></symbol>
+    <symbol id="icon-briefcase" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M4 12h16M10 12v2h4v-2"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="m4.9 15.2-1.1 1.9 2.2 2.2 1.9-1.1M8.8 20.4h2.5l.7-2.2M15.2 20.4h2.5l.7-2.2M19.1 15.2l1.1 1.9-2.2 2.2-1.9-1.1M19.1 8.8l1.1-1.9L18 4.7l-1.9 1.1M15.2 3.6h-2.5L12 5.8M8.8 3.6H6.3l-.7 2.2M4.9 8.8 3.8 6.9l2.2-2.2 1.9 1.1"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M19 8a7.5 7.5 0 0 0-13.3-1.8L4 8.5M4 5v3.5h3.5M5 16a7.5 7.5 0 0 0 13.3 1.8L20 15.5M20 19v-3.5h-3.5"/></symbol>
+    <symbol id="icon-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="icon-chart" viewBox="0 0 24 24"><path d="M4 18V5M4 18h16M8 15v-3M12 15V8M16 15v-6M20 15v-9"/></symbol>
+    <symbol id="icon-message" viewBox="0 0 24 24"><path d="M5 5.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/><path d="M7 10h.01M12 10h.01M17 10h.01"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+
+  <div id="app"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const companies = [
+      { id: 'c1', name: '字节跳动', domain: 'jobs.bytedance.com', tone: 'blue', link: 'https://jobs.bytedance.com/', industry: '互联网', batch: '秋招正式批', priority: 'P0', applications: 2, latest: '技术面', updated: '2026.08.08', phases: ['简历筛选', '技术面'] },
+      { id: 'c2', name: '小红书', domain: 'job.xiaohongshu.com', tone: 'red', link: 'https://job.xiaohongshu.com/', industry: '互联网', batch: '秋招提前批', priority: 'P1', applications: 1, latest: '简历筛选', updated: '2026.08.06', phases: ['简历筛选'] },
+      { id: 'c3', name: '腾讯科技', domain: 'tencent.com', tone: 'green', link: 'https://join.qq.com/', industry: '游戏', batch: '秋招正式批', priority: 'P0', applications: 2, latest: '已投递', updated: '2026.08.04', phases: ['已投递'] },
+      { id: 'c4', name: '上海寻梦信息技术', domain: 'pinduoduo.com', tone: 'orange', link: 'https://careers.pinduoduo.com/', industry: '互联网', batch: '春招正式批', priority: 'P2', applications: 1, latest: '已结束', updated: '2026.07.28', phases: ['已结束'] },
+    ];
+    const industryOptions = ['互联网', '制造业', '央国企', '快消', '银行', '游戏', '军工'];
+    const batchOptions = ['秋招正式批', '秋招提前批', '春招正式批'];
+    const priorityOptions = ['P0', 'P1', 'P2'];
+    const applications = [
+      { id: 'a1', companyId: 'c1', title: '高级前端工程师', location: '北京 · 海淀', link: 'https://jobs.bytedance.com/position/1', applied: '2026.07.20', updated: '2026.08.08', status: '技术面', kind: 'success', referral: true, stages: [['投递', 'done'], ['筛选', 'done'], ['技术面', 'current'], ['HR 面', 'upcoming'], ['Offer', 'upcoming']] },
+      { id: 'a2', companyId: 'c1', title: 'Web 基础架构工程师', location: '上海 · 徐汇', link: 'https://jobs.bytedance.com/position/2', applied: '2026.07.28', updated: '2026.08.05', status: '简历筛选', kind: 'warning', referral: false, stages: [['投递', 'done'], ['筛选', 'current'], ['技术面', 'upcoming'], ['HR 面', 'upcoming'], ['Offer', 'upcoming']] },
+      { id: 'a3', companyId: 'c2', title: '社区产品经理', location: '上海 · 杨浦', link: 'https://job.xiaohongshu.com/position/3', applied: '2026.07.25', updated: '2026.08.06', status: '简历筛选', kind: 'warning', referral: false, stages: [['投递', 'done'], ['筛选', 'current'], ['面试', 'upcoming'], ['Offer', 'upcoming']] },
+      { id: 'a4', companyId: 'c3', title: '前端开发工程师', location: '深圳 · 南山', link: 'https://join.qq.com/position/4', applied: '2026.08.01', updated: '2026.08.04', status: '已投递', kind: 'brand', referral: false, stages: [['投递', 'current'], ['筛选', 'upcoming'], ['面试', 'upcoming'], ['Offer', 'upcoming']] },
+      { id: 'a5', companyId: 'c3', title: '设计系统工程师', location: '广州 · 天河', link: 'https://join.qq.com/position/5', applied: '2026.07.31', updated: '2026.08.02', status: '已投递', kind: 'brand', referral: true, stages: [['投递', 'current'], ['筛选', 'upcoming'], ['面试', 'upcoming'], ['Offer', 'upcoming']] },
+      { id: 'a6', companyId: 'c4', title: '数据产品经理', location: '上海 · 浦东', link: 'https://careers.pinduoduo.com/position/6', applied: '2026.07.10', updated: '2026.07.28', status: '已结束', kind: 'error', referral: false, stages: [['投递', 'done'], ['筛选', 'done'], ['面试', 'done'], ['已结束', 'current']] },
+    ];
+    const state = { tab: 'applications', query: '', scope: 'active', phase: 'all', recruitmentPriority: 'all', recruitmentIndustry: 'all', expanded: new Set(['c1']) };
+    const root = document.querySelector('#app');
+    const toast = document.querySelector('#toast');
+    let toastTimer;
+    let searchTimer;
+
+    function icon(name, className = '') { return `<svg class="icon ${className}" aria-hidden="true"><use href="#icon-${name}"></use></svg>`; }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char])); }
+    function companyById(id) { return companies.find((company) => company.id === id); }
+    function phaseClass(label) { if (label.includes('面')) return 'success'; if (label.includes('筛选')) return 'warning'; if (label.includes('结束')) return 'error'; return 'brand'; }
+    function hostLabel(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
+    function logo(company) {
+      const domain = /^[a-z0-9.-]+$/i.test(company.domain) ? company.domain : '';
+      const url = `https://ico.faviconkit.net/favicon/${encodeURIComponent(domain)}?sz=64`;
+      return `<div class="company-logo logo-${company.tone}"><span>${escapeHtml(company.name.slice(0, 2))}</span><img src="${url}" alt="" width="64" height="64" loading="eager" decoding="async" referrerpolicy="no-referrer" onload="if (this.naturalWidth > 0) { this.style.opacity='1'; this.previousElementSibling.style.opacity='0'; }" onerror="this.style.opacity='0'; this.previousElementSibling.style.opacity='1'" /></div>`;
+    }
+    function link(url, label) { return `<a class="company-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ${icon('arrow', 'icon--sm')}</a>`; }
+    function recruitmentLink(url) { return `<a class="recruitment-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">招聘链接 ${icon('arrow', 'icon--sm')}</a>`; }
+    function companyChip(company, field) {
+      const value = company[field];
+      const label = ({ industry: '行业类型', batch: '招聘批次', priority: '优先度' })[field];
+      return `<button class="editable-field-value" type="button" data-company-field="${field}" data-id="${company.id}" aria-label="编辑${label}，当前为${escapeHtml(value)}">${escapeHtml(value)}</button>`;
+    }
+    function renderTimeline(application) {
+      const stateLabels = { done: '已完成', current: '当前进度', upcoming: '未开始' };
+      return `<div class="timeline-section"><div class="timeline-head"><span class="timeline-title">招聘进度</span><button class="timeline-edit" type="button" data-action="application" data-id="${application.id}" aria-label="编辑${escapeHtml(application.title)}当前进度">编辑进度</button></div><div class="timeline" role="list" aria-label="${escapeHtml(application.title)}招聘进度">${application.stages.map(([label, status]) => `<div class="timeline-step is-${status}" role="listitem" ${status === 'current' ? 'aria-current="step"' : ''} aria-label="${escapeHtml(label)}，${stateLabels[status] || ''}"><span class="timeline-dot">${status === 'done' ? icon('check', 'icon--sm') : ''}</span><span class="timeline-label">${escapeHtml(label)}</span></div>`).join('')}</div></div>`;
+    }
+    function appMatches(application, company) {
+      const query = state.query.trim().toLowerCase();
+      if (!query) return true;
+      return [company.name, company.industry, company.batch, company.priority, application.title, application.location, application.link, application.status].some((value) => String(value).toLowerCase().includes(query));
+    }
+    function appsFor(company) {
+      return applications.filter((application) => {
+        if (application.companyId !== company.id) return false;
+        if (state.scope === 'active' && application.kind === 'error') return false;
+        if (state.phase !== 'all' && !application.status.includes(state.phase)) return false;
+        return appMatches(application, company);
+      });
+    }
+    function visibleCompanies() {
+      return companies.filter((company) => {
+        if (state.tab === 'recruitment') {
+          if (state.recruitmentPriority !== 'all' && company.priority !== state.recruitmentPriority) return false;
+          if (state.recruitmentIndustry !== 'all' && company.industry !== state.recruitmentIndustry) return false;
+          const query = state.query.trim().toLowerCase();
+          return !query || [company.name, company.link, company.industry, company.batch, company.priority].some((value) => String(value).toLowerCase().includes(query));
+        }
+        return appsFor(company).length > 0;
+      });
+    }
+    function renderApplication(application) {
+      return `<article class="application"><div class="application-info-grid"><div class="application-cell application-cell--title"><span class="application-column-label">投递岗位名称</span><strong class="application-title" title="${escapeHtml(application.title)}">${escapeHtml(application.title)}</strong></div><div class="application-cell application-cell--link"><span class="application-column-label">岗位链接</span><a class="application-link" href="${escapeHtml(application.link)}" target="_blank" rel="noopener noreferrer">查看岗位 ${icon('arrow', 'icon--sm')}</a></div><div class="application-cell application-cell--location"><span class="application-column-label">岗位工作地点</span><span class="application-value">${escapeHtml(application.location)}</span></div><div class="application-cell application-cell--applied"><span class="application-column-label">投递日期</span><span class="application-value">${escapeHtml(application.applied)}</span></div><div class="application-cell application-cell--updated"><span class="application-column-label">最新更新日期</span><span class="application-value">${escapeHtml(application.updated)}</span></div></div>${renderTimeline(application)}</article>`;
+    }
+    function renderCompanyListHead() { return `<div class="company-list-head" aria-hidden="true"><span></span><span>公司</span><span>投递链接</span><span>投递岗位数</span><span>已投递岗位</span><span>操作</span></div>`; }
+    function renderCompany(company) {
+      const apps = appsFor(company);
+      const expanded = state.expanded.has(company.id);
+      const jobNames = apps.map((application) => application.title);
+      const jobList = jobNames.length ? jobNames.map((title) => `<span>${escapeHtml(title)}</span>`).join('') : '<span>暂无岗位</span>';
+      return `<article class="company-card ${expanded ? 'is-open' : ''}" data-company-id="${company.id}"><div class="company-head"><button class="expand" type="button" data-expand="${company.id}" aria-expanded="${expanded}" aria-controls="company-details-${company.id}" aria-label="${expanded ? '收起' : '展开'}${escapeHtml(company.name)}">${icon('chevron')}</button><div class="company-identity">${logo(company)}<div class="company-copy"><span class="company-name" title="${escapeHtml(company.name)}">${escapeHtml(company.name)}</span></div></div><div class="company-summary-cell company-summary-link"><span class="summary-label">投递链接</span>${link(company.link, '投递链接')}</div><div class="company-summary-cell company-summary-count"><span class="summary-label">投递岗位数</span>${apps.length}</div><div class="company-summary-cell applied-jobs"><span class="summary-label">已投递岗位</span><div class="applied-job-list" title="${escapeHtml(jobNames.join('、'))}">${jobList}</div></div><div class="actions"><button class="table-action table-action--edit company-edit" type="button" data-action="edit" data-id="${company.id}">编辑</button></div></div><div class="company-details" id="company-details-${company.id}"><div class="details-head"><strong>岗位投递明细 · ${apps.length} 条</strong></div><div class="applications-table"><div class="applications">${apps.map(renderApplication).join('')}</div></div></div></article>`;
+    }
+    function renderRecruitmentRow(company, head = false) {
+      if (head) return `<div class="recruitment-row recruitment-row--head" aria-hidden="true"><span>公司</span><span>行业类型</span><span>招聘批次</span><span>优先度</span><span>招聘链接</span><span>投递岗位数</span><span>最近更新</span><span>操作</span></div>`;
+      return `<article class="recruitment-row"><div class="company-identity">${logo(company)}<div class="company-copy"><span class="company-name" title="${escapeHtml(company.name)}">${escapeHtml(company.name)}</span></div></div><div class="recruitment-cell"><span class="mobile-label">行业类型</span>${companyChip(company, 'industry')}</div><div class="recruitment-cell"><span class="mobile-label">招聘批次</span>${companyChip(company, 'batch')}</div><div class="recruitment-cell"><span class="mobile-label">优先度</span>${companyChip(company, 'priority')}</div><div class="recruitment-cell recruitment-cell--link"><span class="mobile-label">招聘链接</span>${recruitmentLink(company.link)}</div><div class="recruitment-cell"><span class="mobile-label">投递岗位数</span><span class="count">${company.applications}</span></div><div class="recruitment-cell"><span class="mobile-label">最近更新</span><span class="field-value">${escapeHtml(company.updated)}</span></div><div class="actions"><button class="table-action table-action--apply" type="button" data-action="apply" data-id="${company.id}" aria-label="为${escapeHtml(company.name)}新增岗位投递">投递</button><button class="table-action table-action--edit" type="button" data-action="edit" data-id="${company.id}" aria-label="编辑${escapeHtml(company.name)}招聘信息">编辑</button><button class="table-action table-action--delete" type="button" data-action="delete-company" data-id="${company.id}" aria-label="删除${escapeHtml(company.name)}及关联岗位投递">删除</button></div></article>`;
+    }
+    function stats() {
+      const activeApplications = applications.filter((application) => application.kind !== 'error').length;
+      const interviews = applications.filter((application) => application.kind === 'success').length;
+      if (state.tab === 'recruitment') return [['招聘公司', companies.length, '家公司', '全部已保存的招聘信息', 'building'], ['投递岗位数', applications.length, '个岗位', '公司下全部岗位记录', 'briefcase'], ['P0 公司', companies.filter((company) => company.priority === 'P0').length, '家公司', '优先跟进队列', 'chart'], ['最近更新', '08.08', '', '公司与投递更新时间', 'clock']];
+      return [['进行中的公司', 3, '家公司', '较上周新增 1 家', 'chart'], ['已投递岗位', activeApplications, '个岗位', '全部岗位投递记录', 'briefcase'], ['面试中', interviews, '个岗位', '当前处于面试阶段', 'message'], ['最近更新', '08.08', '', '按进度更新时间', 'clock']];
+    }
+    function renderStats() { return `<section class="metrics metrics--${state.tab}" aria-label="数据概览">${stats().map(([label, value, unit, note, iconName], index) => `<article class="metric-card"><div class="metric-label"><span>${label}</span><span class="metric-icon">${icon(iconName)}</span></div><div class="metric-value">${value}${unit ? `<small>${unit}</small>` : ''}</div><p class="metric-note">${index === 0 && state.tab === 'applications' ? '<strong>↑ 1</strong> ' : ''}${note}</p></article>`).join('')}</section>`; }
+    function render() {
+      const visible = visibleCompanies();
+      const activeCount = applications.filter((application) => application.kind !== 'error').length;
+      const body = state.tab === 'applications' ? `<div class="company-list">${renderCompanyListHead()}${visible.map(renderCompany).join('')}</div>` : `<div class="recruitment-list"><div class="recruitment-table">${renderRecruitmentRow(null, true)}${visible.map((company) => renderRecruitmentRow(company)).join('')}</div></div>`;
+      root.innerHTML = `<div class="app-layout"><section class="main-area"><header class="topbar"><nav class="view-tabs" aria-label="内容视图" role="tablist"><button type="button" role="tab" aria-selected="${state.tab === 'applications'}" class="${state.tab === 'applications' ? 'is-active' : ''}" data-tab="applications">岗位投递 <span class="tab-badge">${activeCount}</span></button><button type="button" role="tab" aria-selected="${state.tab === 'recruitment'}" class="${state.tab === 'recruitment' ? 'is-active' : ''}" data-tab="recruitment">招聘信息 <span class="tab-badge">${companies.length}</span></button></nav><div class="topbar-actions"><button class="header-action" type="button" data-action="help">${icon('message', 'icon--sm')} 帮助</button><button class="header-action" type="button" data-action="settings">${icon('settings', 'icon--sm')} 设置</button><span class="avatar">郭</span></div></header><main class="content" id="main-content"><section class="page-head"><div><h1>${state.tab === 'applications' ? '岗位投递' : '招聘信息'}</h1><p>${state.tab === 'applications' ? '按公司聚合管理岗位投递，及时掌握下一步招聘进度。' : '集中查看公司招聘链接、行业类型与投递岗位数。'}</p></div><div class="page-head-actions"><button class="button button--default" type="button" data-action="sync">${icon('refresh', 'icon--sm')} 同步状态</button><button class="button button--primary" type="button" data-action="new">${icon('plus', 'icon--sm')} ${state.tab === 'applications' ? '新增投递' : '新增公司'}</button></div></section>${renderStats()}<section class="panel" aria-labelledby="panel-title"><header class="panel-head"><div><h2 class="panel-title" id="panel-title">${state.tab === 'applications' ? '岗位投递进度' : '已保存的公司'}</h2><p class="panel-subtitle">${state.tab === 'applications' ? '展开公司后查看岗位详情、招聘阶段和最近更新时间。' : '招聘链接和行业类型均可独立维护。'}</p></div><span class="panel-status"><span class="sync-dot"></span> 数据已保存</span></header><div class="toolbar"><div class="toolbar-left"><label class="search"><span class="sr-only">搜索</span>${icon('search')}<input id="search" type="search" value="${escapeHtml(state.query)}" placeholder="搜索公司、岗位、地点或行业" /></label>${state.tab === 'applications' ? `<div class="toolbar-right"><label><span class="sr-only">投递范围</span><select class="select" id="scope"><option value="active" ${state.scope === 'active' ? 'selected' : ''}>进行中的投递</option><option value="all" ${state.scope === 'all' ? 'selected' : ''}>全部投递</option></select></label><label><span class="sr-only">招聘阶段</span><select class="select" id="phase"><option value="all" ${state.phase === 'all' ? 'selected' : ''}>全部阶段</option><option value="已投递" ${state.phase === '已投递' ? 'selected' : ''}>已投递</option><option value="筛选" ${state.phase === '筛选' ? 'selected' : ''}>简历筛选</option><option value="面试" ${state.phase === '面试' ? 'selected' : ''}>面试阶段</option><option value="结束" ${state.phase === '结束' ? 'selected' : ''}>已结束</option></select></label></div>` : ''}</div><span class="toolbar-count">显示 <strong>${visible.length}</strong> 家公司</span></div>${body}<div class="empty ${visible.length ? '' : 'is-visible'}">${icon('search', 'icon--lg')}<strong>没有匹配的记录</strong><p>试试更换关键词或清空筛选条件。</p></div></section></main></section></div>`;
+      const panel = root.querySelector('.panel');
+      const panelHead = panel.querySelector('.panel-head');
+      const headingBlock = panelHead.firstElementChild;
+      const panelStatus = panelHead.querySelector('.panel-status');
+      const toolbar = panel.querySelector('.toolbar');
+      const toolbarLeft = toolbar.querySelector('.toolbar-left');
+      const search = toolbar.querySelector('.search');
+      const searchWrap = document.createElement('div');
+      const meta = document.createElement('div');
+      searchWrap.className = 'panel-search-wrap';
+      meta.className = 'panel-head-meta';
+      search.querySelector('input').placeholder = state.tab === 'applications' ? '搜索公司、已投递岗位或地点' : '搜索公司、行业、批次或优先度';
+      searchWrap.append(search);
+      meta.append(panelStatus);
+      headingBlock.replaceWith(searchWrap);
+      panelHead.append(meta);
+      panelHead.classList.add('panel-head--search');
+      panel.removeAttribute('aria-labelledby');
+      panel.setAttribute('aria-label', state.tab === 'applications' ? '岗位投递列表' : '招聘信息列表');
+      if (state.tab === 'recruitment') {
+        const filters = document.createElement('div');
+        filters.className = 'recruitment-filters';
+        filters.innerHTML = `<label><span class="sr-only">筛选优先度</span><select class="select" id="recruitment-priority"><option value="all" ${state.recruitmentPriority === 'all' ? 'selected' : ''}>全部优先度</option>${priorityOptions.map((priority) => `<option value="${priority}" ${state.recruitmentPriority === priority ? 'selected' : ''}>${priority}</option>`).join('')}</select></label><label><span class="sr-only">筛选行业</span><select class="select" id="recruitment-industry"><option value="all" ${state.recruitmentIndustry === 'all' ? 'selected' : ''}>全部行业</option>${industryOptions.map((industry) => `<option value="${industry}" ${state.recruitmentIndustry === industry ? 'selected' : ''}>${industry}</option>`).join('')}</select></label>`;
+        searchWrap.append(filters);
+        toolbar.remove();
+      } else {
+        const filters = toolbarLeft.querySelector('.toolbar-right');
+        if (filters) {
+          filters.classList.add('application-filters');
+          searchWrap.append(filters);
+        }
+        toolbar.remove();
+      }
+    }
+    function showToast(message) { toast.innerHTML = `${icon('check', 'icon--sm')}<span>${escapeHtml(message)}</span>`; toast.classList.add('is-visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2500); }
+    root.addEventListener('click', (event) => {
+      const tab = event.target.closest('[data-tab]');
+      if (tab) { state.tab = tab.dataset.tab; state.phase = 'all'; state.expanded = new Set(['c1']); render(); return; }
+      const expand = event.target.closest('[data-expand]');
+      if (expand) { const id = expand.dataset.expand; state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id); render(); return; }
+      const companyField = event.target.closest('[data-company-field]');
+      if (companyField) {
+        const company = companyById(companyField.dataset.id);
+        const field = companyField.dataset.companyField;
+        const options = ({ industry: industryOptions, batch: batchOptions, priority: priorityOptions })[field];
+        const currentIndex = options.indexOf(company[field]);
+        company[field] = options[(currentIndex + 1) % options.length];
+        const label = ({ industry: '行业类型', batch: '招聘批次', priority: '优先度' })[field];
+        render();
+        showToast(`${company.name}的${label}已切换为${company[field]}`);
+        return;
+      }
+      const action = event.target.closest('[data-action]');
+      if (!action) return;
+      if (action.dataset.action === 'apply') {
+        const company = companyById(action.dataset.id);
+        state.tab = 'applications';
+        state.scope = 'all';
+        state.phase = 'all';
+        state.expanded = new Set([company.id]);
+        render();
+        showToast(`已定位到${company.name}，可继续新增岗位投递。`);
+        return;
+      }
+      if (action.dataset.action === 'delete-company') {
+        const company = companyById(action.dataset.id);
+        const relatedCount = applications.filter((application) => application.companyId === company.id).length;
+        const confirmed = window.confirm(`确认删除“${company.name}”吗？该操作会同时删除 ${relatedCount} 条关联岗位投递信息。`);
+        if (!confirmed) return;
+        const companyIndex = companies.findIndex((item) => item.id === company.id);
+        if (companyIndex >= 0) companies.splice(companyIndex, 1);
+        for (let index = applications.length - 1; index >= 0; index -= 1) {
+          if (applications[index].companyId === company.id) applications.splice(index, 1);
+        }
+        state.expanded.delete(company.id);
+        render();
+        showToast(`已删除${company.name}及 ${relatedCount} 条关联岗位投递。`);
+        return;
+      }
+      const messages = { new: state.tab === 'applications' ? '新增投递入口已保留，接入现有投递表单即可。' : '新增公司入口已保留，接入现有公司表单即可。', edit: '公司编辑入口已保留，可维护招聘链接、行业类型、招聘批次和优先度。', application: '当前进度编辑入口已触发，可接入现有进度编辑器。', sync: '原型状态：最近同步于今天 09:42。', settings: '偏好设置入口已保留。', help: '帮助中心入口已保留。' };
+      showToast(messages[action.dataset.action] || '操作已触发');
+    });
+    root.addEventListener('input', (event) => {
+      if (event.target.id !== 'search') return;
+      state.query = event.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        const current = document.querySelector('#search');
+        const caret = current ? current.selectionStart : state.query.length;
+        if (document.activeElement === current) current.blur();
+        render();
+        const next = document.querySelector('#search');
+        if (next) { next.focus(); next.setSelectionRange(caret, caret); }
+      }, 120);
+    });
+    root.addEventListener('change', (event) => { if (event.target.id === 'scope') state.scope = event.target.value; if (event.target.id === 'phase') state.phase = event.target.value; if (event.target.id === 'recruitment-priority') state.recruitmentPriority = event.target.value; if (event.target.id === 'recruitment-industry') state.recruitmentIndustry = event.target.value; render(); });
+    render();
+  </script>
+</body>
+</html>
