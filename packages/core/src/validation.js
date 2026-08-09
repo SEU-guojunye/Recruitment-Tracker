@@ -1,7 +1,9 @@
 import {
+  COMPANY_PRIORITIES,
   FIELD_LIMITS,
   MODEL_SCHEMA_VERSION,
   PROGRESS_PHASE_ORDER,
+  RECRUITMENT_BATCHES,
 } from './constants.js'
 import { isIsoUtcTimestamp, isLocalDate, toLocalDate } from './dates.js'
 import { isHttpUrl, normalizeCompanyName } from './normalization.js'
@@ -79,6 +81,25 @@ export function validateCompanyRecord(company) {
     )
   }
   validateUrl(errors, company.recruitmentLink, 'recruitmentLink')
+  validateText(errors, company.industryType, 'industryType', {
+    max: FIELD_LIMITS.industryType,
+  })
+  if (!RECRUITMENT_BATCHES.includes(company.recruitmentBatch)) {
+    addError(
+      errors,
+      'recruitmentBatch',
+      'invalid_recruitment_batch',
+      'recruitmentBatch 不在支持范围内',
+    )
+  }
+  if (!COMPANY_PRIORITIES.includes(company.priority)) {
+    addError(
+      errors,
+      'priority',
+      'invalid_priority',
+      'priority 只接受 P0、P1 或 P2',
+    )
+  }
   validateText(errors, company.companyNotes, 'companyNotes', {
     max: FIELD_LIMITS.notes,
   })

@@ -2,6 +2,28 @@ export const MODEL_SCHEMA_VERSION = 1
 
 export const MAX_DATA_BYTES = 8 * 1024 * 1024
 
+export const INDUSTRY_TYPE_PRESETS = Object.freeze([
+  '互联网',
+  '制造业',
+  '央国企',
+  '快消',
+  '银行',
+  '游戏',
+  '军工',
+])
+
+export const RECRUITMENT_BATCHES = Object.freeze([
+  '秋招正式批',
+  '秋招提前批',
+  '春招正式批',
+])
+
+export const COMPANY_PRIORITIES = Object.freeze(['P0', 'P1', 'P2'])
+
+export const DEFAULT_RECRUITMENT_BATCH = RECRUITMENT_BATCHES[0]
+
+export const DEFAULT_COMPANY_PRIORITY = 'P1'
+
 export const PROGRESS_PHASE_ORDER = Object.freeze([
   'submitted',
   'screening',
@@ -47,6 +69,7 @@ export const SYNC_STATUSES = Object.freeze([
 
 export const FIELD_LIMITS = Object.freeze({
   companyName: 120,
+  industryType: 80,
   jobTitle: 200,
   url: 2048,
   notes: 5000,

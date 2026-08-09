@@ -50,11 +50,10 @@ export function selectApplicationStats(companies, applications) {
 }
 
 export function selectCompanyStats(companies, applications) {
-  const applicationStats = selectApplicationStats(companies, applications)
   return {
     companyCount: companies.length,
     applicationCount: applications.length,
-    activeCompanyCount: applicationStats.activeCompanyCount,
+    p0CompanyCount: companies.filter((company) => company.priority === 'P0').length,
     latestUpdatedAt: maxIsoTimestamp([
       ...companies.map((company) => company.updatedAt),
       ...applications.map((application) => application.updatedAt),
@@ -100,7 +99,9 @@ function applicationSearchText(company, application) {
   return normalizeSearchText([
     company.companyName,
     company.recruitmentLink,
-    company.companyNotes,
+    company.industryType,
+    company.recruitmentBatch,
+    company.priority,
     application.jobTitle,
     application.applicationLink,
     application.statusLink,
@@ -113,7 +114,9 @@ function companySearchText(company) {
   return normalizeSearchText([
     company.companyName,
     company.recruitmentLink,
-    company.companyNotes,
+    company.industryType,
+    company.recruitmentBatch,
+    company.priority,
   ].join(' '))
 }
 
@@ -148,14 +151,12 @@ export function filterApplicationCompanies(
 export function filterRecruitmentCompanies(
   companies,
   applications,
-  { query = '' } = {},
+  { query = '', priority = null, industryType = null } = {},
 ) {
   const normalizedQuery = normalizeSearchText(query)
   return aggregateCompanies(companies, applications).filter((row) => {
-    if (!normalizedQuery) return true
-    if (companySearchText(row.company).includes(normalizedQuery)) return true
-    return row.applications.some((application) =>
-      applicationSearchText(row.company, application).includes(normalizedQuery),
-    )
+    if (priority && row.company.priority !== priority) return false
+    if (industryType && row.company.industryType !== industryType) return false
+    return !normalizedQuery || companySearchText(row.company).includes(normalizedQuery)
   })
 }

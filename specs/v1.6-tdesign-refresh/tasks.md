@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Establish the v1.6 company data contract
+- [x] 1. Establish the v1.6 company data contract
   - Add classification constants, model defaults, validation, selectors, statistics, and CSV columns.
   - Update core fixtures and tests; preserve parser/Popup boundary changes already in progress.
   - _Requirements: R1, R2, R8_

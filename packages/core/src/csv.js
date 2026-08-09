@@ -14,6 +14,9 @@ export const CSV_HEADERS = Object.freeze([
   'companyId',
   'companyName',
   'recruitmentLink',
+  'industryType',
+  'recruitmentBatch',
+  'priority',
   'companyNotes',
   'companyCreatedAt',
   'companyUpdatedAt',
@@ -89,7 +92,10 @@ export function serializeRecruitmentCsv(data) {
       companyId: company.id,
       companyName: company.companyName,
       recruitmentLink: company.recruitmentLink,
-      companyNotes: company.companyNotes,
+      industryType: company.industryType,
+      recruitmentBatch: company.recruitmentBatch,
+      priority: company.priority,
+      companyNotes: '',
       companyCreatedAt: company.createdAt,
       companyUpdatedAt: company.updatedAt,
     })
@@ -450,12 +456,16 @@ export class CsvImportExportService {
           }
         }
 
-        const exists = data.companies.some((company) => company.id === targetId)
+        const existingTarget = data.companies.find((company) => company.id === targetId)
+        const exists = Boolean(existingTarget)
         const company = createCompanyRecord({
           id: targetId,
           companyName: row.values.companyName,
           recruitmentLink: row.values.recruitmentLink,
-          companyNotes: row.values.companyNotes,
+          industryType: row.values.industryType,
+          recruitmentBatch: row.values.recruitmentBatch,
+          priority: row.values.priority,
+          companyNotes: existingTarget?.companyNotes || '',
           createdAt: row.values.companyCreatedAt || timestamp,
           updatedAt: row.values.companyUpdatedAt || timestamp,
         }, { idFactory: this.idFactory, now: this.now })

@@ -63,8 +63,21 @@ describe('core model normalization and creation', () => {
       companyName: 'Acme  集团',
       normalizedCompanyName: 'acme 集团',
       recruitmentLink: 'https://example.com/jobs',
+      industryType: '',
+      recruitmentBatch: '秋招正式批',
+      priority: 'P1',
       createdAt: '2026-08-08T10:00:00.000Z',
     })
+  })
+
+  it('validates closed company classifications and accepts custom industries', () => {
+    expect(makeCompany({ industryType: '新能源', priority: 'P0' })).toMatchObject({
+      industryType: '新能源',
+      priority: 'P0',
+    })
+    expect(() => makeCompany({ recruitmentBatch: '暑期实习' }))
+      .toThrow(DomainValidationError)
+    expect(() => makeCompany({ priority: 'P3' })).toThrow(DomainValidationError)
   })
 
   it('returns normalized-name matches as candidates without silently merging', () => {
@@ -200,7 +213,7 @@ describe('dataset integrity, statistics and deterministic filtering', () => {
   })
 
   it('calculates the two PRD statistic card sets', () => {
-    const companyA = makeCompany({ id: 'company-a', companyName: 'A' })
+    const companyA = makeCompany({ id: 'company-a', companyName: 'A', priority: 'P0' })
     const companyB = makeCompany({ id: 'company-b', companyName: 'B' })
     const submitted = makeApplication(companyA, {
       id: 'application-a',
@@ -233,7 +246,7 @@ describe('dataset integrity, statistics and deterministic filtering', () => {
     expect(selectCompanyStats([companyA, companyB], applications)).toMatchObject({
       companyCount: 2,
       applicationCount: 3,
-      activeCompanyCount: 1,
+      p0CompanyCount: 1,
       latestUpdatedAt: '2026-08-08T10:00:00.000Z',
     })
   })
@@ -282,15 +295,30 @@ describe('dataset integrity, statistics and deterministic filtering', () => {
     expect(rows[0].applications).toEqual([interview])
   })
 
-  it('searches all PRD fields and keeps every eligible child when the company matches', () => {
-    const company = makeCompany({ companyNotes: '重点关注校招' })
+  it('searches v1.6 fields and combines recruitment filters with AND semantics', () => {
+    const company = makeCompany({
+      industryType: '新能源',
+      recruitmentBatch: '春招正式批',
+      priority: 'P0',
+    })
     const first = makeApplication(company, { workLocation: '上海' })
     const second = makeApplication(company, { applicationNotes: '远程岗位' })
-    expect(filterApplicationCompanies([company], [first, second], { query: '校招' })[0].applications)
+    expect(filterApplicationCompanies([company], [first, second], { query: '新能源' })[0].applications)
       .toHaveLength(2)
     expect(filterApplicationCompanies([company], [first, second], { query: '远程' })[0].applications)
       .toEqual([second])
-    expect(filterRecruitmentCompanies([company], [first, second], { query: '上海' }))
+    expect(filterRecruitmentCompanies([company], [first, second], {
+      query: '春招',
+      priority: 'P0',
+      industryType: '新能源',
+    }))
       .toHaveLength(1)
+    expect(filterRecruitmentCompanies([company], [first, second], {
+      query: '春招',
+      priority: 'P1',
+      industryType: '新能源',
+    })).toHaveLength(0)
+    expect(filterRecruitmentCompanies([company], [first, second], { query: '上海' }))
+      .toHaveLength(0)
   })
 })

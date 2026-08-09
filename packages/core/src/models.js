@@ -1,4 +1,8 @@
-import { MODEL_SCHEMA_VERSION } from './constants.js'
+import {
+  DEFAULT_COMPANY_PRIORITY,
+  DEFAULT_RECRUITMENT_BATCH,
+  MODEL_SCHEMA_VERSION,
+} from './constants.js'
 import { toLocalDate } from './dates.js'
 import {
   normalizeCompanyName,
@@ -33,6 +37,11 @@ export function createCompanyRecord(
     companyName,
     normalizedCompanyName: normalizeCompanyName(companyName),
     recruitmentLink: normalizeOptionalUrl(input.recruitmentLink),
+    industryType: typeof input.industryType === 'string'
+      ? input.industryType.trim()
+      : '',
+    recruitmentBatch: input.recruitmentBatch || DEFAULT_RECRUITMENT_BATCH,
+    priority: input.priority || DEFAULT_COMPANY_PRIORITY,
     companyNotes: input.companyNotes || '',
     createdAt: input.createdAt || timestamp,
     updatedAt: input.updatedAt || timestamp,

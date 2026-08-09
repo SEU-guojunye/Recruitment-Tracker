@@ -50,6 +50,9 @@ function createFixture() {
     id: 'company-a',
     companyName: '示例,科技',
     recruitmentLink: 'https://example.com/careers',
+    industryType: '=互联网',
+    recruitmentBatch: '秋招提前批',
+    priority: 'P0',
     companyNotes: '第一行\n包含 "引号" 与逗号,',
     createdAt: '2026-08-01T01:02:03.000Z',
     updatedAt: '2026-08-02T01:02:03.000Z',
@@ -57,6 +60,9 @@ function createFixture() {
   const emptyCompany = createCompanyRecord({
     id: 'company-empty',
     companyName: '暂无投递公司',
+    industryType: '制造业',
+    recruitmentBatch: '春招正式批',
+    priority: 'P2',
     companyNotes: '=HYPERLINK("https://bad.example")',
     createdAt: '2026-08-03T01:02:03.000Z',
     updatedAt: '2026-08-04T01:02:03.000Z',
@@ -147,14 +153,24 @@ describe('CsvImportExportService', () => {
     expect(rows.filter((row) => row.values.recordType === 'application')).toHaveLength(2)
     expect(rows.find((row) => row.values.companyId === 'company-empty')).toBeDefined()
     expect(rows.filter((row) => row.values.companyId === 'company-a')).toHaveLength(3)
+    expect(rows.find((row) => row.values.companyId === 'company-a').values).toMatchObject({
+      industryType: '=互联网',
+      recruitmentBatch: '秋招提前批',
+      priority: 'P0',
+      companyNotes: '',
+    })
     expect(csv).not.toMatch(/_openid|accessToken|refreshToken|secretId|secretKey/iu)
   })
 
-  it('round-trips multiline notes, custom stages, order, current stage and formulas losslessly', async () => {
+  it('round-trips classifications, application notes, custom stages and formulas losslessly', async () => {
     const source = createRepository()
     const expected = await seed(source)
+    expected.companies = expected.companies.map((company) => ({
+      ...company,
+      companyNotes: '',
+    }))
     const csv = await service(source).exportCsv()
-    expect(csv).toContain("'=HYPERLINK")
+    expect(csv).toContain("'=互联网")
     expect(csv).toContain("'+86-test")
     expect(csv).toContain("'@重点跟进")
     expect(csv).toContain("''原始单引号")
@@ -256,7 +272,8 @@ describe('CsvImportExportService', () => {
       row.values.companyId === 'company-a' && row.values.applicationId !== 'application-b',
     )
     csv = encodeRows(selectedRows)
-    csv = replaceCell(csv, 1, 'companyNotes', '')
+    csv = replaceCell(csv, 1, 'industryType', '人工智能')
+    csv = replaceCell(csv, 1, 'companyNotes', '不得导入的新备注')
     csv = replaceCell(csv, 2, 'workLocation', '')
 
     const preview = await service(repository).previewImport(csv)
@@ -264,7 +281,10 @@ describe('CsvImportExportService', () => {
     await service(repository).commitImport(preview)
     const after = await repository.getEnvelope()
     expect(after.sync.localRevision).toBe(before.sync.localRevision + 1)
-    expect(after.data.companies.find((item) => item.id === 'company-a').companyNotes).toBe('')
+    expect(after.data.companies.find((item) => item.id === 'company-a')).toMatchObject({
+      industryType: '人工智能',
+      companyNotes: original.companies[0].companyNotes,
+    })
     expect(after.data.applications.find((item) => item.id === 'application-a').workLocation).toBe('')
     expect(after.data.applications.find((item) => item.id === 'application-b')).toEqual(
       original.applications[1],
@@ -283,6 +303,8 @@ describe('CsvImportExportService', () => {
     await source.saveCompany(createCompanyRecord({
       id: 'company-source',
       companyName: 'acme   科技',
+      industryType: '互联网',
+      priority: 'P0',
       companyNotes: '新备注',
     }, { now: NOW }))
     let csv = await service(source).exportCsv()
@@ -301,7 +323,28 @@ describe('CsvImportExportService', () => {
     expect(confirmed).toMatchObject({ canCommit: true, summary: { companyUpdates: 1 } })
     await importer.commitImport(confirmed)
     expect((await repository.getData()).companies).toHaveLength(1)
-    expect((await repository.getData()).companies[0].companyNotes).toBe('新备注')
+    expect((await repository.getData()).companies[0]).toMatchObject({
+      industryType: '互联网',
+      priority: 'P0',
+      companyNotes: '旧备注',
+    })
+  })
+
+  it('rejects unsupported recruitment batches and priorities atomically', async () => {
+    const source = createRepository()
+    await seed(source)
+    const validCsv = await service(source).exportCsv()
+    const importer = service(createRepository())
+    for (const [csv, column, code] of [
+      [replaceCell(validCsv, 1, 'recruitmentBatch', '暑期实习'), 'recruitmentBatch', 'invalid_recruitment_batch'],
+      [replaceCell(validCsv, 1, 'priority', 'P3'), 'priority', 'invalid_priority'],
+    ]) {
+      const preview = await importer.previewImport(csv)
+      expect(preview.canCommit).toBe(false)
+      expect(preview.errors).toEqual(expect.arrayContaining([
+        expect.objectContaining({ column, code }),
+      ]))
+    }
   })
 
   it('rejects stale previews and imports exceeding the configured capacity', async () => {

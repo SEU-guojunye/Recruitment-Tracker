@@ -105,7 +105,10 @@ describe('editable extension dashboard', () => {
     await user.click(within(dialog).getByRole('button', { name: '确认导入' }))
 
     expect(await screen.findByText(/CSV 导入成功：新增 1 条/u)).toBeInTheDocument()
-    expect((await repository.getData()).companies).toEqual([importedCompany])
+    expect((await repository.getData()).companies).toEqual([{
+      ...importedCompany,
+      companyNotes: '',
+    }])
     expect((await repository.getEnvelope()).sync.localRevision).toBe(1)
   })
 

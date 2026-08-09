@@ -96,16 +96,19 @@ function titleCandidates(raw) {
 }
 
 export class ParserOrchestrator {
-  constructor({ reliableThreshold = 0.75 } = {}) {
+  constructor({ reliableThreshold = 0.75, now = () => new Date() } = {}) {
     this.reliableThreshold = reliableThreshold
+    this.now = now
   }
 
   parse(raw) {
+    const parsedAt = this.now().toISOString()
     if (!raw || typeof raw !== 'object') {
       return {
         status: 'unavailable',
         company: { companyName: '', recruitmentLink: '' },
         alternatives: [],
+        parsedAt,
       }
     }
     const recruitmentLink = cleanUrl(raw.url)
@@ -141,6 +144,7 @@ export class ParserOrchestrator {
         recruitmentLink,
       },
       alternatives,
+      parsedAt,
     }
   }
 }

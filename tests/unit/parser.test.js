@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 
 describe('ParserOrchestrator', () => {
   it('prefers JSON-LD hiring organization and returns company fields only', () => {
-    const parser = new ParserOrchestrator()
+    const parser = new ParserOrchestrator({
+      now: () => new Date('2026-08-09T09:30:00.000Z'),
+    })
     const result = parser.parse({
       url: 'https://example.com/jobs/123',
       title: '高级工程师 | 招聘',
@@ -23,6 +25,11 @@ describe('ParserOrchestrator', () => {
     expect(result.company).not.toHaveProperty('appliedDate')
     expect(result.company).not.toHaveProperty('applicationLink')
     expect(result.company).not.toHaveProperty('progressStatus')
+    expect(result.company).not.toHaveProperty('companyNotes')
+    expect(result.company).not.toHaveProperty('industryType')
+    expect(result.company).not.toHaveProperty('recruitmentBatch')
+    expect(result.company).not.toHaveProperty('priority')
+    expect(result.parsedAt).toBe('2026-08-09T09:30:00.000Z')
   })
 
   it('marks a title-only guess as needing confirmation', () => {
@@ -51,7 +58,9 @@ describe('ParserOrchestrator', () => {
   })
 
   it('rejects dangerous links, generic site names and overlong candidates', () => {
-    const parser = new ParserOrchestrator()
+    const parser = new ParserOrchestrator({
+      now: () => new Date('2026-08-09T09:31:00.000Z'),
+    })
     const result = parser.parse({
       url: 'javascript:alert(1)',
       title: 'x'.repeat(121),
@@ -61,6 +70,7 @@ describe('ParserOrchestrator', () => {
     expect(result).toMatchObject({
       status: 'unavailable',
       company: { companyName: '', recruitmentLink: '' },
+      parsedAt: '2026-08-09T09:31:00.000Z',
     })
   })
 })
