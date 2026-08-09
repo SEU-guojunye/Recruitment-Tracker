@@ -6,6 +6,7 @@ import {
   PageState,
   ProgressTimeline,
   getCompanyIconUrl,
+  getCompanyIconUrls,
 } from '@recruitment-tracker/ui'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -92,26 +93,38 @@ describe('shared readonly dashboard UI', () => {
     expect(screen.queryByRole('region', { name: '结果节点详情' })).not.toBeInTheDocument()
   })
 
-  it('derives a hostname-only favicon URL and keeps a one-character themed fallback', () => {
+  it('tries multiple external icon APIs and keeps a one-character themed fallback', () => {
+    expect(getCompanyIconUrls(company.recruitmentLink)).toEqual([
+      'https://a.favicon.im/example.com?larger=true&throw-error-on-404=true',
+      'https://ico.faviconkit.net/favicon/example.com?sz=128',
+    ])
     expect(getCompanyIconUrl(company.recruitmentLink))
       .toBe('https://ico.faviconkit.net/favicon/example.com?sz=128')
+    expect(getCompanyIconUrls('javascript:alert(1)')).toEqual([])
     expect(getCompanyIconUrl('javascript:alert(1)')).toBe('')
-    const { container, rerender } = render(<CompanyLogo company={company} />)
+    const { container, unmount } = render(<CompanyLogo company={company} />)
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://a.favicon.im/example.com?larger=true&throw-error-on-404=true',
+    )
+    expect(container).toHaveTextContent('极')
+    expect(container).not.toHaveTextContent('极光')
+    fireEvent.load(container.querySelector('img'))
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
       'https://ico.faviconkit.net/favicon/example.com?sz=128',
     )
-    expect(container).toHaveTextContent('极')
-    expect(container).not.toHaveTextContent('极光')
-    fireEvent.error(container.querySelector('img'))
     expect(container.querySelector('.rt-company-logo')).not.toHaveClass('is-loaded')
-    Object.defineProperty(container.querySelector('img'), 'naturalWidth', { value: 128 })
-    fireEvent.load(container.querySelector('img'))
-    expect(container.querySelector('.rt-company-logo')).toHaveClass('is-loaded')
-    rerender(<CompanyLogo company={{ ...company, recruitmentLink: 'invalid' }} />)
+    fireEvent.error(container.querySelector('img'))
     expect(container.querySelector('img')).not.toBeInTheDocument()
     expect(container).toHaveTextContent('极')
     expect(container).not.toHaveTextContent('极光')
+
+    unmount()
+    const successful = render(<CompanyLogo company={company} />)
+    Object.defineProperty(successful.container.querySelector('img'), 'naturalWidth', { value: 180 })
+    fireEvent.load(successful.container.querySelector('img'))
+    expect(successful.container.querySelector('.rt-company-logo')).toHaveClass('is-loaded')
   })
 
   it('exposes retryable errors as alerts', async () => {

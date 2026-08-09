@@ -24,8 +24,14 @@
   - 覆盖无效链接、图片加载失败和图片加载成功三种状态。
   - _Requirements: R5_
 
-- [ ] 5. 完成响应式、兼容和回归验收
+- [x] 5. 实现企业图标多源逐级解析
+  - 依次尝试 Favicon.im 高清 API 和 FaviconKit 128px API。
+  - 来源失败或图片无效时自动推进，全部失败后使用首字回退。
+  - 覆盖 URL 生成、来源切换、成功停止和全部失败状态。
+  - _Requirements: R5, R6_
+
+- [ ] 6. 完成响应式、兼容和回归验收
   - 覆盖旧数据、CSV、CloudBase 快照、扩展写入和 Web 只读展示。
   - 验证桌面、320–430px 手机端、键盘操作与无水平溢出。
   - 运行 lint、单元测试、构建、完整 E2E、浏览器检查和 CloudBase 代码审查。
-  - _Requirements: R1-R6_
+  - _Requirements: R1-R7_

@@ -11,7 +11,7 @@ import {
   selectApplicationStats,
   selectCompanyStats,
 } from '@recruitment-tracker/core'
-import { getCompanyIconUrl } from './company-logo.js'
+import { getCompanyIconUrls } from './company-logo.js'
 
 function formatLocalDate(value) {
   return value ? value.replaceAll('-', '.') : '未填写'
@@ -118,15 +118,28 @@ export function PageState({ type, title, description, actionLabel = '重试', on
 }
 
 export function CompanyLogo({ company }) {
-  const iconUrl = getCompanyIconUrl(company.recruitmentLink)
-  const [loadedUrl, setLoadedUrl] = useState('')
-  const loaded = Boolean(iconUrl) && loadedUrl === iconUrl
+  const iconUrls = getCompanyIconUrls(company.recruitmentLink)
+  const sourceKey = iconUrls.join('|')
+  const [sourceState, setSourceState] = useState({ key: '', index: 0, loaded: false })
+  const sourceIndex = sourceState.key === sourceKey ? sourceState.index : 0
+  const iconUrl = iconUrls[sourceIndex] || ''
+  const loaded = Boolean(iconUrl)
+    && sourceState.key === sourceKey
+    && sourceState.loaded
   const fallback = Array.from(company.companyName.trim())[0] || '企'
+  const tryNextSource = () => {
+    setSourceState((current) => ({
+      key: sourceKey,
+      index: (current.key === sourceKey ? current.index : 0) + 1,
+      loaded: false,
+    }))
+  }
   return (
     <span className={`rt-company-logo ${loaded ? 'is-loaded' : ''}`} aria-hidden="true">
       <span>{fallback}</span>
       {iconUrl ? (
         <img
+          key={iconUrl}
           src={iconUrl}
           alt=""
           width="128"
@@ -135,9 +148,13 @@ export function CompanyLogo({ company }) {
           decoding="async"
           referrerPolicy="no-referrer"
           onLoad={(event) => {
-            setLoadedUrl(event.currentTarget.naturalWidth > 0 ? iconUrl : '')
+            if (event.currentTarget.naturalWidth > 0) {
+              setSourceState({ key: sourceKey, index: sourceIndex, loaded: true })
+            } else {
+              tryNextSource()
+            }
           }}
-          onError={() => setLoadedUrl('')}
+          onError={tryNextSource}
         />
       ) : null}
     </span>
