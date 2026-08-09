@@ -2,7 +2,7 @@
 
 > 版本：v1.6
 >
-> 状态：工程脚手架、Dashboard 原型和 CloudBase 测试环境已建立 / 核心业务功能尚未实现 / 开工边界已确定
+> 状态：v1.6 数据模型、TDesign Dashboard、扩展编辑端与只读 Web 已完成本地验收 / 待重新部署
 >
 > 开发语言：JavaScript ES2022+ / JSX
 >

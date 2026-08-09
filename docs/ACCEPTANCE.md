@@ -1,13 +1,14 @@
-# Recruitment Tracker v0.1.2 验收记录
+# Recruitment Tracker PRD v1.6 本地验收记录
 
-验收基准：`PRD.md` v1.5；使用范围：个人单账号、单编辑设备，保留账号适配器、版本化模型和 Reader/Writer 边界以便扩展。
+验收日期：2026-08-09。验收基准：`PRD.md` v1.6 与 `dashboard-tdesign.html`；使用范围：个人单账号、单编辑设备。本次只完成代码与本地验收，未重新部署或制作发布包。
 
 ## 产品闭环
 
 - [x] Popup 从当前招聘页提取公司级信息，用户确认后只保存公司，不自动创建投递。
+- [x] 公司支持行业类型、招聘批次和 P0/P1/P2 优先度；Popup 新建公司时使用空行业、秋招正式批和 P1 默认值。
 - [x] 电脑 Dashboard 完成公司、同公司多投递、进度流程和级联删除的本地闭环。
 - [x] 每条投递可在电脑端独立维护岗位名称；共享展示、搜索和只读 Web 均能读取该字段。
-- [x] CSV 覆盖全部公司和投递，可无损往返，自定义流程、备注和多行文本不丢失。
+- [x] CSV 覆盖全部公司和投递；新增分类列参与往返，弃用的 `companyNotes` 兼容列始终导出为空且导入时不覆盖历史值。
 - [x] 本地变更保留 dirty 修订，Service Worker 使用 `chrome.alarms` 延迟合并上传。
 - [x] 手机 Web 必须有非匿名真实 Session，且只读取当前用户最近一次快照。
 
@@ -21,15 +22,17 @@
 - [x] 账号错配和设备冲突不会静默覆盖；清空重绑或接管前必须导出并再次确认。
 - [x] 扩展不包含 CloudBase Web SDK、高权限密钥、远程脚本或通配 API Host 权限。
 - [x] 生产桥接校验固定扩展 Origin、父窗口、消息来源、channel、requestId 和超时。
+- [x] 公司图标由招聘链接的 hostname 在渲染时派生，只向 FaviconKit 发送 hostname；不存储图标 URL、二进制或独立域名字段，失败时保留双字回退。
 
 ## 只读与响应式
 
 - [x] 无 Session 时不读取快照；匿名 Session 被拒绝。
 - [x] 无快照、网络失败、Session 过期和不支持的 schemaVersion 分别展示不同状态。
 - [x] 手机组件树不存在公司/投递/进度/CSV/同步上传写事件。
-- [x] 320、360、390、430 px 下无横向溢出；时间线由桌面横向切换为手机纵向。
-- [x] 手机具体记录字号已放大；纵向时间线收紧为节点与内容两列，桌面环节文字与节点分层展示。
-- [x] 招聘信息最近更新仅展示日期，查看投递/投递/编辑/删除控件保持同一行。
+- [x] 320、360、390、430 px 下无横向溢出；桌面和手机均保持六列横向 Steps，手机端允许环节名称换行。
+- [x] 手机公司列表与招聘信息列表转为卡片布局，投递信息采用双列元数据，并保留当前环节的 `aria-current="step"`。
+- [x] 招聘信息最近更新仅展示日期，操作收敛为“投递 / 编辑 / 删除”；分类字段可点击并聚焦到对应编辑项。
+- [x] 招聘信息支持搜索、优先度、行业三者 AND 组合筛选；只读 Web 仅暴露浏览与筛选控件。
 - [x] 顶部统计卡片使用统一风格的 SVG 线性图标，替换简陋字符图标。
 
 ## 恢复与工程
@@ -38,9 +41,10 @@
 - [x] 离线同步失败保留本地数据；协调器重建后依据 dirty 修订恢复并可重试成功。
 - [x] 上传期间继续编辑不会由旧修订错误清除 dirty 状态。
 - [x] lint、单元/组件测试、生产构建和 Chromium E2E 均执行真实脚本。
-- [x] CloudBase 环境、认证方式、NoSQL 规则、函数权限和函数可用状态已通过管理面回读。
+- [x] 历史 v0.1.2 发布时已回读 CloudBase 环境、认证方式、NoSQL 规则、函数权限和函数可用状态；本次未改变云端配置。
+- [x] CloudBase 代码审查确认 Web 使用 `getSession()` 守卫、拒绝匿名 Session、检查 Auth error，未使用废弃登录 API。
 
-## 发布产物
+## 历史 v0.1.2 发布产物（本次未重新发布）
 
 - 扩展 ID：`jpmabplkjdmlfjpllogjaieehdohkndg`
 - 扩展包：`release/recruitment-tracker-extension-0.1.2.zip`
@@ -54,7 +58,7 @@
 - Web Version：`recruitment-tracker-003`
 - Web Build ID：`2601563472`（`SUCCESS`）
 
-## 线上发布验证
+## 历史 v0.1.2 线上发布验证
 
 - [x] CloudBase 应用详情回读为 `LatestVersionName=recruitment-tracker-003`、`LatestStatus=SUCCESS`。
 - [x] 生产首页返回 HTTP 200，并包含 Web 应用挂载节点。
@@ -65,7 +69,8 @@
 ## 自动化结果
 
 - ESLint：通过。
-- Vitest：14 个测试文件、84 个测试通过。
+- Vitest：14 个测试文件、88 个测试通过。
 - 生产构建：Web 与 Extension 均通过；仅有 CloudBase SDK 共享 chunk 大小提示，无功能或安全错误。
 - Playwright：9 个 Chromium E2E 通过；1 个需要临时 QA 凭据的真实 CloudBase 账号测试按设计跳过。
+- 浏览器手工复核：390 × 844 登录页无横向溢出，TDesign 移动布局正确铺满，控制台无应用错误或警告。
 - npm 生产依赖审计：0 个已知漏洞。

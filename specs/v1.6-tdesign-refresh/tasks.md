@@ -20,7 +20,7 @@
   - Verify snapshot states and the read-only component boundary.
   - _Requirements: R3, R4, R5, R7_
 
-- [ ] 5. Complete regression and browser acceptance
+- [x] 5. Complete regression and browser acceptance
   - Update acceptance documentation and E2E expectations.
   - Run lint, tests, builds, responsive browser flows, accessibility checks, and CloudBase code review.
   - _Requirements: R1-R8_

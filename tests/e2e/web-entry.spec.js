@@ -19,9 +19,8 @@ test.beforeEach(async ({ page }) => {
 
 test('web entry renders the readonly shell', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('Recruitment Tracker')).toBeVisible()
   await expect(page.getByText('手机只读模式')).toBeVisible()
-  await expect(page.getByRole('heading', { name: '我的投递' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '岗位投递' })).toBeVisible()
   await expect(page.getByLabel('招聘进度：当前为技术一面')).toBeVisible()
 })
 
@@ -44,7 +43,7 @@ test('readonly component tree exposes no business write controls', async ({ page
   }
 })
 
-test('timeline changes from horizontal to vertical without hiding core information', async ({ page }) => {
+test('timeline remains horizontal and keeps core information visible on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/')
   const desktopColumns = await page.locator('.rt-timeline').first().evaluate(
@@ -56,7 +55,7 @@ test('timeline changes from horizontal to vertical without hiding core informati
   const mobileColumns = await page.locator('.rt-timeline').first().evaluate(
     (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
   )
-  expect(mobileColumns).toBe(1)
+  expect(mobileColumns).toBe(6)
   await expect(page.locator('.rt-timeline__name', { hasText: '技术一面' })).toBeVisible()
-  await expect(page.locator('.rt-timeline__date', { hasText: '2026.08.08' })).toBeVisible()
+  await expect(page.locator('[aria-current="step"]')).toContainText('技术一面')
 })

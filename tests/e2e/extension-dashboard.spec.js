@@ -24,13 +24,18 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
 
     await expect(page.getByText('电脑编辑模式')).toBeVisible()
-    await page.getByRole('button', { name: '＋ 招聘信息' }).click()
-    await page.getByLabel('公司名称').fill('端到端公司')
-    await page.getByLabel('公司招聘链接').fill('https://example.com/careers')
-    await page.getByRole('button', { name: '保存' }).click()
+    await page.getByRole('tab', { name: /招聘信息/u }).click()
+    await page.getByRole('button', { name: '新增公司' }).click()
+    const companyDialog = page.getByRole('dialog', { name: '保存招聘信息' })
+    await companyDialog.getByLabel('公司名称').fill('端到端公司')
+    await companyDialog.getByLabel('公司招聘链接').fill('https://example.com/careers')
+    await companyDialog.getByLabel('行业类型').fill('互联网')
+    await companyDialog.getByLabel('招聘批次').selectOption('秋招提前批')
+    await companyDialog.getByLabel('优先度').selectOption('P0')
+    await companyDialog.getByRole('button', { name: '保存' }).click()
     await expect(page.getByText('公司招聘信息已保存')).toBeVisible()
 
-    await page.getByRole('button', { name: '＋ 新增投递' }).click()
+    await page.locator('.rt-recruitment-row').getByRole('button', { name: '投递' }).click()
     await page.getByLabel('工作地点').fill('上海 / 远程')
     await page.getByRole('button', { name: '保存投递' }).click()
     await expect(page.getByText('投递记录已保存')).toBeVisible()
@@ -39,6 +44,7 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     page = await context.newPage()
     await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
     await expect(page.getByText('端到端公司')).toBeVisible()
+    await page.getByRole('tab', { name: /岗位投递/u }).click()
     await page.getByRole('button', { name: '展开端到端公司' }).click()
     await expect(page.getByText('上海 / 远程')).toBeVisible()
     const stored = await page.evaluate(async () => {
@@ -47,7 +53,12 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     })
     expect(stored.sync).toMatchObject({ localRevision: 2, dirty: true })
     expect(stored.data).toMatchObject({
-      companies: [{ companyName: '端到端公司' }],
+      companies: [{
+        companyName: '端到端公司',
+        industryType: '互联网',
+        recruitmentBatch: '秋招提前批',
+        priority: 'P0',
+      }],
       applications: [{ workLocation: '上海 / 远程' }],
     })
 
