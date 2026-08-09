@@ -720,6 +720,15 @@ export function DashboardApp({
         onRetry={() => void load()}
         headerActions={(
           <>
+            {syncClient ? (
+              <button
+                className={`rt-sync-status is-${envelope?.sync.status || 'idle'}`}
+                type="button"
+                onClick={() => setSyncPanelOpen(true)}
+              >
+                同步：{SYNC_STATUS_LABELS[envelope?.sync.status] || '加载中'}
+              </button>
+            ) : null}
             <label className="rt-sr-only" htmlFor="csv-file-input">选择 CSV 文件</label>
             <input
               ref={csvFileInputRef}
@@ -751,43 +760,30 @@ export function DashboardApp({
           </>
         )}
         pageActions={(
-          <>
-            {syncClient ? (
-              <button
-                className={`rt-sync-status is-${envelope?.sync.status || 'idle'}`}
-                type="button"
-                onClick={() => setSyncPanelOpen(true)}
-              >
-                同步：{SYNC_STATUS_LABELS[envelope?.sync.status] || '加载中'}
-              </button>
-            ) : null}
-            <button
-              className="rt-action-button"
-              type="button"
-              disabled={activeTab === 'applications' && companies.length === 0}
-              onClick={() => {
-                if (activeTab === 'applications') {
-                  setApplicationEditor({ application: null, companyId: null })
-                } else {
-                  setCompanyEditor({ company: null, focusField: 'companyName' })
-                }
-              }}
-            >
-              {activeTab === 'applications' ? '新增投递' : '新增公司'}
-            </button>
-          </>
+          <button
+            className="rt-action-button is-primary"
+            type="button"
+            disabled={activeTab === 'applications' && companies.length === 0}
+            onClick={() => {
+              if (activeTab === 'applications') {
+                setApplicationEditor({ application: null, companyId: null })
+              } else {
+                setCompanyEditor({ company: null, focusField: 'companyName' })
+              }
+            }}
+          >
+            {activeTab === 'applications' ? '新增投递' : '新增公司'}
+          </button>
         )}
         renderCompanyActions={(company) => (
           <>
-            {activeTab === 'recruitment' ? (
-              <button
-                className="rt-table-action is-apply"
-                type="button"
-                onClick={() => setApplicationEditor({ application: null, companyId: company.id })}
-              >
-                投递
-              </button>
-            ) : null}
+            <button
+              className="rt-table-action is-apply"
+              type="button"
+              onClick={() => setApplicationEditor({ application: null, companyId: company.id })}
+            >
+              投递
+            </button>
             <button className="rt-table-action is-edit" type="button" onClick={() => setCompanyEditor({ company, focusField: 'companyName' })}>
               编辑
             </button>

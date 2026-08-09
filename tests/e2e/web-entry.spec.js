@@ -102,7 +102,7 @@ test('company summary columns are equal and evenly spaced on mobile', async ({ p
   await page.setViewportSize({ width: 390, height: 900 })
   await page.goto('/')
 
-  const layout = await page.locator('.rt-company-card__head').first().evaluate((head) => {
+  const layout = await page.locator('.rt-company-card.is-open .rt-company-card__head').evaluate((head) => {
     const style = getComputedStyle(head)
     const columnWidths = style.gridTemplateColumns
       .split(' ')
@@ -110,12 +110,15 @@ test('company summary columns are equal and evenly spaced on mobile', async ({ p
     const summaryCells = [...head.querySelectorAll('.rt-company-summary-cell')]
       .slice(0, 2)
       .map((cell) => cell.getBoundingClientRect().width)
+    const identityRect = head.querySelector('.rt-company-identity').getBoundingClientRect()
+    const captionRect = head.parentElement.querySelector('.rt-detail-caption').getBoundingClientRect()
 
     return {
       columnCount: columnWidths.length,
       contentColumnsAreEqual: Math.abs(columnWidths[1] - columnWidths[2]) <= 1,
       summaryCellsAreEqual: Math.abs(summaryCells[0] - summaryCells[1]) <= 1,
       columnGap: style.columnGap,
+      detailsAlignWithCompany: Math.abs(captionRect.left - identityRect.left) <= 1,
     }
   })
 
@@ -124,6 +127,7 @@ test('company summary columns are equal and evenly spaced on mobile', async ({ p
     contentColumnsAreEqual: true,
     summaryCellsAreEqual: true,
     columnGap: '12px',
+    detailsAlignWithCompany: true,
   })
 })
 
@@ -160,12 +164,14 @@ test('readonly desktop lists use equal semantic columns and evenly spaced anchor
       semanticColumnCount: widths.length,
       widthDelta: Math.max(...widths) - Math.min(...widths),
       intervalDelta: Math.max(...intervals) - Math.min(...intervals),
+      companyAlignment: getComputedStyle(head.children[1]).textAlign,
     }
   })
   expect(companyLayout).toEqual({
     semanticColumnCount: 4,
     widthDelta: 0,
     intervalDelta: 0,
+    companyAlignment: 'left',
   })
 
   await page.getByRole('tab', { name: /招聘信息/u }).click()
@@ -188,5 +194,5 @@ test('readonly desktop lists use equal semantic columns and evenly spaced anchor
   expect(recruitmentLayout.columnCount).toBe(7)
   expect(recruitmentLayout.widthDelta).toBeLessThanOrEqual(1)
   expect(recruitmentLayout.intervalDelta).toBeLessThanOrEqual(1)
-  expect(recruitmentLayout.alignments).toEqual(Array(7).fill('center'))
+  expect(recruitmentLayout.alignments).toEqual(['left', ...Array(6).fill('center')])
 })

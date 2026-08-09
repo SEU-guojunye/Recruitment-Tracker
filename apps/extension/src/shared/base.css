@@ -139,7 +139,7 @@ textarea {
 }
 
 .rt-topbar__actions {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 

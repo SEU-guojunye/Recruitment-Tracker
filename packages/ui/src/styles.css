@@ -488,6 +488,10 @@ a {
   white-space: nowrap;
 }
 
+.rt-company-list__head > span:nth-child(2) {
+  text-align: left;
+}
+
 .rt-company-list.is-editable .rt-company-list__head > span:last-child {
   text-align: center;
 }
@@ -514,7 +518,7 @@ a {
 }
 
 .rt-company-card__head > .rt-company-identity {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .rt-expand-button {
@@ -691,7 +695,7 @@ a {
 
 .rt-application-info-grid {
   display: grid;
-  align-items: end;
+  align-items: start;
   gap: 18px;
 }
 
@@ -705,6 +709,8 @@ a {
 
 .rt-application-cell {
   display: grid;
+  grid-template-rows: 20px 28px;
+  align-items: center;
   gap: 4px;
   min-width: 0;
   justify-items: center;
@@ -716,6 +722,7 @@ a {
   color: var(--td-text-placeholder);
   font-size: 12px;
   font-weight: 600;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -726,6 +733,7 @@ a {
   color: var(--td-text-primary);
   font-size: 13px;
   font-weight: 400;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -733,6 +741,20 @@ a {
 .rt-application-cell--title > strong {
   color: var(--td-brand-6);
   font-weight: 600;
+}
+
+.rt-application-cell > strong,
+.rt-application-cell > .rt-application-link,
+.rt-application-cell > .rt-row-actions {
+  align-self: center;
+}
+
+.rt-application-cell > .rt-application-link {
+  line-height: 20px;
+}
+
+.rt-application-cell > .rt-row-actions {
+  min-height: 28px;
 }
 
 .rt-application-cell--actions {
@@ -895,6 +917,10 @@ a {
   white-space: nowrap;
 }
 
+.rt-recruitment-list__head > span:first-child {
+  text-align: left;
+}
+
 .rt-recruitment-row {
   min-height: 64px;
   border-right: 1px solid var(--td-border);
@@ -920,7 +946,7 @@ a {
 }
 
 .rt-recruitment-row > .rt-company-identity {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .rt-recruitment-row > .rt-recruitment-cell--link .rt-company-link {
@@ -929,6 +955,7 @@ a {
 
 .rt-recruitment-row > .rt-row-actions {
   justify-content: center;
+  gap: 16px;
 }
 
 .rt-recruitment-value,
@@ -1015,6 +1042,19 @@ a {
   color: var(--td-text-secondary);
   border-color: var(--td-border);
   background: var(--td-bg-container);
+}
+
+.rt-action-button.is-primary {
+  color: #ffffff;
+  border-color: var(--td-brand-6);
+  background: var(--td-brand-6);
+  font-weight: 600;
+}
+
+.rt-action-button.is-primary:hover {
+  color: #ffffff;
+  border-color: var(--td-brand-7);
+  background: var(--td-brand-7);
 }
 
 .rt-button--secondary:hover,
@@ -1339,7 +1379,7 @@ a {
   }
 
   .rt-recruitment-row > .rt-row-actions {
-    gap: 2px;
+    gap: 8px;
   }
 
   .rt-recruitment-row > .rt-row-actions .rt-table-action {
@@ -1369,20 +1409,20 @@ a {
 
   .rt-company-list.is-editable .rt-company-card__head {
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) minmax(92px, 0.55fr) 96px;
+    grid-template-columns: 34px repeat(2, minmax(0, 1fr));
     gap: 10px;
     padding: 12px;
   }
 
   .rt-company-list.is-readonly .rt-company-card__head {
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) minmax(92px, 0.55fr);
+    grid-template-columns: 34px repeat(2, minmax(0, 1fr));
     gap: 10px;
     padding: 12px;
   }
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-company-identity {
-    grid-column: 2 / 4;
+    grid-column: 2 / -1;
     justify-content: flex-start;
   }
 
@@ -1392,8 +1432,12 @@ a {
   }
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-row-actions {
-    grid-column: 4;
-    grid-row: 1;
+    grid-column: 2 / -1;
+    grid-row: auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--td-border);
   }
 
   .rt-company-summary-cell {
@@ -1420,7 +1464,7 @@ a {
   }
 
   .rt-company-card__details {
-    padding: 0 12px 13px;
+    padding: 0 12px 13px 56px;
   }
 
   .rt-application-info-grid.is-readonly,
@@ -1464,6 +1508,7 @@ a {
   .rt-recruitment-row > .rt-row-actions {
     grid-column: 1 / -1;
     justify-content: flex-start;
+    gap: 16px;
     padding-top: 10px;
     border-top: 1px solid var(--td-border);
   }
@@ -1612,6 +1657,10 @@ a {
   .rt-company-list.is-readonly .rt-company-card__head {
     grid-template-columns: 34px repeat(2, minmax(0, 1fr));
     column-gap: 12px;
+  }
+
+  .rt-company-card__details {
+    padding-left: 58px;
   }
 
   .rt-company-list.is-editable .rt-company-card__head > .rt-company-identity,

@@ -25,8 +25,27 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
 
     await expect(page.getByText('电脑编辑模式')).toBeVisible()
     await expect(page.locator('.rt-sync-status')).toHaveCSS('border-radius', '6px')
+    const headerControlLayout = await page.locator('.rt-topbar__actions').evaluate((actions) => {
+      const modeRect = actions.querySelector('.rt-mode-badge').getBoundingClientRect()
+      const syncRect = actions.querySelector('.rt-sync-status').getBoundingClientRect()
+      return {
+        flexWrap: getComputedStyle(actions).flexWrap,
+        syncFollowsMode: syncRect.left >= modeRect.right,
+        sameRow: Math.abs(syncRect.top - modeRect.top) <= 2,
+      }
+    })
+    expect(headerControlLayout).toEqual({
+      flexWrap: 'nowrap',
+      syncFollowsMode: true,
+      sameRow: true,
+    })
+    await expect(page.locator('.rt-page-head__actions .rt-sync-status')).toHaveCount(0)
     await page.getByRole('tab', { name: /招聘信息/u }).click()
-    await page.getByRole('button', { name: '新增公司' }).click()
+    const addCompanyButton = page.getByRole('button', { name: '新增公司' })
+    await expect(addCompanyButton).toHaveCSS('background-color', 'rgb(0, 82, 217)')
+    await expect(addCompanyButton).toHaveCSS('color', 'rgb(255, 255, 255)')
+    await expect(addCompanyButton).toHaveCSS('font-weight', '600')
+    await addCompanyButton.click()
     const companyDialog = page.getByRole('dialog', { name: '保存招聘信息' })
     await companyDialog.getByLabel('公司名称').fill('端到端公司')
     await companyDialog.getByLabel('公司招聘链接').fill('https://example.com/careers')
@@ -46,6 +65,12 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
     await expect(page.getByText('端到端公司')).toBeVisible()
     await page.getByRole('tab', { name: /岗位投递/u }).click()
+    const addApplicationButton = page.getByRole('button', { name: '新增投递' })
+    await expect(addApplicationButton).toHaveCSS('background-color', 'rgb(0, 82, 217)')
+    await expect(addApplicationButton).toHaveCSS('color', 'rgb(255, 255, 255)')
+    await expect(addApplicationButton).toHaveCSS('font-weight', '600')
+    const companyHead = page.locator('.rt-company-card__head')
+    await expect(companyHead.getByRole('button', { name: '投递' })).toBeVisible()
     await page.getByRole('button', { name: '展开端到端公司' }).click()
     await expect(page.getByText('上海 / 远程')).toBeVisible()
     const applicationCard = page.locator('.rt-application-card')
@@ -62,6 +87,8 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
       const actions = head.querySelector('.rt-row-actions')
       const actionsRect = actions.getBoundingClientRect()
       const appliedJobsRect = head.querySelector('.rt-applied-jobs').getBoundingClientRect()
+      const identityRect = head.querySelector('.rt-company-identity').getBoundingClientRect()
+      const captionRect = head.parentElement.querySelector('.rt-detail-caption').getBoundingClientRect()
       const summaryCells = [...head.querySelectorAll('.rt-company-summary-cell')]
         .slice(0, 2)
         .map((cell) => cell.getBoundingClientRect().width)
@@ -79,6 +106,7 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
         summaryCellsAreEqual: Math.abs(summaryCells[0] - summaryCells[1]) <= 1,
         columnGap: style.columnGap,
         actionsUseOwnRow: actionsRect.top >= appliedJobsRect.bottom,
+        detailsAlignWithCompany: Math.abs(captionRect.left - identityRect.left) <= 1,
         buttonStyles,
       }
     })
@@ -88,7 +116,9 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
       summaryCellsAreEqual: true,
       columnGap: '12px',
       actionsUseOwnRow: true,
+      detailsAlignWithCompany: true,
       buttonStyles: [
+        { whiteSpace: 'nowrap', writingMode: 'horizontal-tb' },
         { whiteSpace: 'nowrap', writingMode: 'horizontal-tb' },
         { whiteSpace: 'nowrap', writingMode: 'horizontal-tb' },
       ],
@@ -115,6 +145,27 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     expect(editableApplicationWidths).toHaveLength(6)
     expect(Math.max(...editableApplicationWidths) - Math.min(...editableApplicationWidths))
       .toBeLessThanOrEqual(1)
+    const applicationRowsAlign = await applicationCard.locator('.rt-application-info-grid').evaluate((grid) => {
+      const textTop = (element) => {
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        return range.getBoundingClientRect().top
+      }
+      const cells = [...grid.children]
+      const labelTops = cells.map((cell) => textTop(cell.firstElementChild))
+      const valueTops = cells.map((cell) => {
+        const value = cell.classList.contains('rt-application-cell--actions')
+          ? cell.querySelector('.rt-table-action')
+          : cell.children[1]
+        return textTop(value)
+      })
+      return {
+        labelDelta: Math.max(...labelTops) - Math.min(...labelTops),
+        valueDelta: Math.max(...valueTops) - Math.min(...valueTops),
+      }
+    })
+    expect(applicationRowsAlign.labelDelta).toBeLessThanOrEqual(1)
+    expect(applicationRowsAlign.valueDelta).toBeLessThanOrEqual(1)
     const editableCompanyWidths = await page.locator('.rt-company-list__head').evaluate(
       (head) => getComputedStyle(head).gridTemplateColumns
         .split(' ')
@@ -124,6 +175,9 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     expect(editableCompanyWidths).toHaveLength(5)
     expect(Math.max(...editableCompanyWidths) - Math.min(...editableCompanyWidths))
       .toBeLessThanOrEqual(1)
+    await expect(page.locator('.rt-company-list__head > span').nth(1)).toHaveCSS('text-align', 'left')
+    await expect(page.locator('.rt-company-card__head > .rt-company-identity'))
+      .toHaveCSS('justify-content', 'flex-start')
     await page.getByRole('tab', { name: /招聘信息/u }).click()
     await expect(page.locator('.rt-recruitment-list__head')).toHaveCSS('font-weight', '600')
     const editableRecruitmentLayout = await page.locator('.rt-recruitment-list__head').evaluate((head) => {
@@ -146,7 +200,10 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
       .toBeLessThanOrEqual(1)
     expect(Math.max(...editableRecruitmentLayout.intervals) - Math.min(...editableRecruitmentLayout.intervals))
       .toBeLessThanOrEqual(1)
-    expect(editableRecruitmentLayout.alignments).toEqual(Array(8).fill('center'))
+    expect(editableRecruitmentLayout.alignments).toEqual(['left', ...Array(7).fill('center')])
+    await expect(page.locator('.rt-recruitment-row > .rt-company-identity'))
+      .toHaveCSS('justify-content', 'flex-start')
+    await expect(page.locator('.rt-recruitment-row > .rt-row-actions')).toHaveCSS('gap', '16px')
     await page.getByRole('tab', { name: /岗位投递/u }).click()
     await expect(page.locator('.rt-company-logo img')).toHaveAttribute('src', /sz=128$/u)
     const stored = await page.evaluate(async () => {
