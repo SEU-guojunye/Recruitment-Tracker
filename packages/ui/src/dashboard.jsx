@@ -144,8 +144,60 @@ export function CompanyLogo({ company }) {
   )
 }
 
+const NOTE_URL_PATTERN = /https?:\/\/[^\s<>"']+/giu
+const NOTE_URL_TRAILING_PUNCTUATION = /[),.;!?，。；！？、]+$/u
+
+function noteParts(note) {
+  const parts = []
+  let cursor = 0
+  for (const match of note.matchAll(NOTE_URL_PATTERN)) {
+    const rawUrl = match[0]
+    const url = rawUrl.replace(NOTE_URL_TRAILING_PUNCTUATION, '')
+    const start = match.index
+    let parsed
+    try {
+      parsed = new URL(url)
+    } catch {
+      continue
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue
+    if (start > cursor) parts.push({ type: 'text', value: note.slice(cursor, start) })
+    parts.push({ type: 'link', value: url })
+    if (rawUrl.length > url.length) {
+      parts.push({ type: 'text', value: rawUrl.slice(url.length) })
+    }
+    cursor = start + rawUrl.length
+  }
+  if (cursor < note.length) parts.push({ type: 'text', value: note.slice(cursor) })
+  return parts
+}
+
+function ProgressStageNote({ note }) {
+  if (!note?.trim()) return <span className="rt-timeline-detail__empty">暂无备注</span>
+  return (
+    <p className="rt-timeline-detail__note">
+      {noteParts(note).map((part, index) => (
+        part.type === 'link' ? (
+          <a
+            className="rt-timeline-detail__link"
+            href={part.value}
+            target="_blank"
+            rel="noopener noreferrer"
+            key={`${part.type}-${index}`}
+          >
+            <span>{part.value}</span><Icon name="arrow" className="rt-icon--small" />
+          </a>
+        ) : <span key={`${part.type}-${index}`}>{part.value}</span>
+      ))}
+    </p>
+  )
+}
+
 export function ProgressTimeline({ application, action = null }) {
   const states = getTimelineStates(application)
+  const [expandedStageId, setExpandedStageId] = useState(null)
+  const detailId = `${useId()}-stage-detail`
+  const expandedStage = states.find((stage) => stage.id === expandedStageId) || null
   const stateLabels = {
     completed: '已完成',
     current: '当前',
@@ -168,14 +220,44 @@ export function ProgressTimeline({ application, action = null }) {
             key={stage.id}
             aria-current={stage.state === 'current' ? 'step' : undefined}
           >
-            <span className="rt-timeline__marker">
-              {stage.state === 'completed' ? <Icon name="check" /> : null}
-            </span>
-            <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
-            <span className="rt-sr-only">{stateLabels[stage.state]}</span>
+            <button
+              className="rt-timeline__trigger"
+              type="button"
+              aria-expanded={expandedStage?.id === stage.id}
+              aria-controls={detailId}
+              aria-label={`${stage.name}：${stateLabels[stage.state]}，${expandedStage?.id === stage.id ? '收起' : '展开'}详情`}
+              onClick={() => setExpandedStageId((current) => current === stage.id ? null : stage.id)}
+            >
+              <span className="rt-timeline__marker">
+                {stage.state === 'completed' ? <Icon name="check" /> : null}
+              </span>
+              <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
+              <span className="rt-sr-only">{stateLabels[stage.state]}</span>
+            </button>
           </li>
         ))}
       </ol>
+      {expandedStage ? (
+        <div
+          className="rt-timeline-detail"
+          id={detailId}
+          role="region"
+          aria-label={`${expandedStage.name}节点详情`}
+        >
+          <div className="rt-timeline-detail__heading">
+            <strong>{expandedStage.name}</strong>
+            <span>{stateLabels[expandedStage.state]}</span>
+          </div>
+          <div className="rt-timeline-detail__field">
+            <span>节点日期</span>
+            <strong>{formatLocalDate(expandedStage.date)}</strong>
+          </div>
+          <div className="rt-timeline-detail__field rt-timeline-detail__field--note">
+            <span>备注</span>
+            <ProgressStageNote note={expandedStage.note} />
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

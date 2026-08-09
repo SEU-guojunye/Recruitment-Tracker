@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   CompanyLogo,
@@ -16,9 +16,9 @@ const company = {
   createdAt: '2026-08-01T00:00:00.000Z', updatedAt: '2026-08-08T00:00:00.000Z',
 }
 const progressStages = [
-  { id: 'submitted', name: '已投递', phase: 'submitted', isTerminal: false, date: '2026-08-01' },
-  { id: 'interview', name: '业务面谈', phase: 'interview', isTerminal: false, date: '2026-08-08' },
-  { id: 'result', name: '结果', phase: 'result', isTerminal: false, date: '' },
+  { id: 'submitted', name: '已投递', phase: 'submitted', isTerminal: false, date: '2026-08-01', note: '' },
+  { id: 'interview', name: '业务面谈', phase: 'interview', isTerminal: false, date: '2026-08-08', note: '准备案例\n会议：https://meeting.example.com/interview。' },
+  { id: 'result', name: '结果', phase: 'result', isTerminal: false, date: '', note: '' },
 ]
 const application = {
   id: 'application-a', companyId: company.id, applicationLink: 'https://example.com/apply',
@@ -59,13 +59,37 @@ describe('shared readonly dashboard UI', () => {
     expect(props.onQueryChange).toHaveBeenCalled()
   })
 
-  it('labels completed, current and upcoming timeline states without relying on color', () => {
+  it('labels timeline states and switches one accessible stage detail panel', async () => {
+    const user = userEvent.setup()
     render(<ProgressTimeline application={application} />)
     expect(screen.getByText('已完成')).toBeInTheDocument()
     expect(screen.getByText('当前')).toBeInTheDocument()
     expect(screen.getByText('未到达')).toBeInTheDocument()
     expect(screen.getByLabelText('招聘进度：当前为业务面谈')).toBeInTheDocument()
     expect(screen.getByText('业务面谈').closest('li')).toHaveAttribute('aria-current', 'step')
+
+    const interviewTrigger = screen.getByRole('button', { name: '业务面谈：当前，展开详情' })
+    expect(interviewTrigger).toHaveAttribute('aria-expanded', 'false')
+    await user.click(interviewTrigger)
+    expect(interviewTrigger).toHaveAttribute('aria-expanded', 'true')
+    const interviewDetail = screen.getByRole('region', { name: '业务面谈节点详情' })
+    expect(interviewDetail).toHaveTextContent('2026.08.08')
+    expect(interviewDetail).toHaveTextContent('准备案例')
+    expect(within(interviewDetail).getByRole('link', {
+      name: /https:\/\/meeting\.example\.com\/interview/u,
+    })).toMatchObject({
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    })
+
+    await user.click(screen.getByRole('button', { name: '结果：未到达，展开详情' }))
+    expect(screen.queryByRole('region', { name: '业务面谈节点详情' })).not.toBeInTheDocument()
+    const resultDetail = screen.getByRole('region', { name: '结果节点详情' })
+    expect(resultDetail).toHaveTextContent('未填写')
+    expect(resultDetail).toHaveTextContent('暂无备注')
+
+    await user.click(screen.getByRole('button', { name: '结果：未到达，收起详情' }))
+    expect(screen.queryByRole('region', { name: '结果节点详情' })).not.toBeInTheDocument()
   })
 
   it('derives a hostname-only favicon URL and keeps a two-character fallback', () => {
