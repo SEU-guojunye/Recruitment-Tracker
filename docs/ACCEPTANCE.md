@@ -67,10 +67,11 @@
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - Web Service：`recruitment-tracker`
 - Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
-- Web Version：`recruitment-tracker-006`
-- Web Build ID：`2601576951`（`SUCCESS`）
+- Web Version：`recruitment-tracker-007`
+- Web Build ID：`2601573518`（`SUCCESS`）
 - 首页与 `/extension-bridge.html` 均返回 HTTP 200，并引用本次构建的新资源哈希。
 - 新 CSS、JS 与 Noto Sans SC WOFF2 字体文件均返回 HTTP 200；生产资源包含粗体表头和 128 px 图标请求。
+- 线上 CSS 已确认包含移动端岗位详情两列布局与岗位名称整行规则。
 - 静态托管首页与错误页均配置为 `index.html`。
 - 已登录线上会话成功读取迁移后的快照；招聘信息页正常显示默认行业、招聘批次和优先度，控制台无错误。
 - `user_snapshots` 的 v1.6 字段迁移和备份信息见 [MIGRATIONS.md](MIGRATIONS.md)。
