@@ -147,7 +147,7 @@ textarea {
   min-height: 34px;
   padding: 0 10px;
   border: 1px solid #e5eaf1;
-  border-radius: 999px;
+  border-radius: var(--td-radius, 6px);
   color: #69778c;
   background: #fff;
   font-size: 10px;

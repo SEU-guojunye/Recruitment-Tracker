@@ -59,3 +59,34 @@ test('timeline remains horizontal and keeps core information visible on mobile',
   await expect(page.locator('.rt-timeline__name', { hasText: '技术一面' })).toBeVisible()
   await expect(page.locator('[aria-current="step"]')).toContainText('技术一面')
 })
+
+test('application details keep a stable two-column mobile layout', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 })
+  await page.goto('/')
+
+  const layout = await page.locator('.rt-application-info-grid').first().evaluate((grid) => {
+    const gridRect = grid.getBoundingClientRect()
+    const titleRect = grid.querySelector('.rt-application-cell--title').getBoundingClientRect()
+    const metadataRect = grid.querySelector('.rt-application-cell--title + .rt-application-cell')
+      .getBoundingClientRect()
+    const cellsStayInside = [...grid.children].every((cell) => {
+      const rect = cell.getBoundingClientRect()
+      return rect.left >= gridRect.left - 1 && rect.right <= gridRect.right + 1
+    })
+
+    return {
+      columnCount: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+      titleUsesFullRow: Math.abs(titleRect.left - gridRect.left) <= 1
+        && Math.abs(titleRect.right - gridRect.right) <= 1,
+      metadataStartsBelowTitle: metadataRect.top >= titleRect.bottom,
+      cellsStayInside,
+    }
+  })
+
+  expect(layout).toEqual({
+    columnCount: 2,
+    titleUsesFullRow: true,
+    metadataStartsBelowTitle: true,
+    cellsStayInside: true,
+  })
+})

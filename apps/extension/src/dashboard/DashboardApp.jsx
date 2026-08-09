@@ -358,7 +358,16 @@ function DeleteDialog({ target, onConfirm, onClose }) {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const companyName = target?.record?.companyName
-  const requiresSecondStep = target?.type === 'company' && target.applicationCount > 0
+  const deletesCompany = target?.type === 'company'
+  const deletesCompanyApplications = target?.type === 'companyApplications'
+  const requiresSecondStep = (
+    deletesCompany || deletesCompanyApplications
+  ) && target.applicationCount > 0
+  const title = deletesCompany
+    ? '删除公司'
+    : deletesCompanyApplications
+      ? '删除全部投递'
+      : '删除投递'
 
   async function remove() {
     setDeleting(true)
@@ -375,13 +384,13 @@ function DeleteDialog({ target, onConfirm, onClose }) {
   return (
     <Dialog
       open={Boolean(target)}
-      title={target?.type === 'company' ? '删除公司' : '删除投递'}
+      title={title}
       description="删除操作会立即写入本地数据，无法从云端恢复。"
       onClose={onClose}
     >
       <div className="rt-form">
         {error ? <p className="rt-form-error" role="alert">{error}</p> : null}
-        {target?.type === 'company' ? (
+        {deletesCompany ? (
           <>
             <p>确定删除“{companyName}”吗？</p>
             {requiresSecondStep ? (
@@ -389,6 +398,11 @@ function DeleteDialog({ target, onConfirm, onClose }) {
                 该公司包含 {target.applicationCount} 条投递，确认后会在同一次本地写入中全部级联删除。
               </p>
             ) : null}
+          </>
+        ) : deletesCompanyApplications ? (
+          <>
+            <p>确定删除“{companyName}”下的全部 {target.applicationCount} 条投递吗？</p>
+            <p className="rt-form-error">公司招聘信息将保留，此操作无法撤销。</p>
           </>
         ) : <p>确定只删除当前投递记录吗？其他投递不会受影响。</p>}
 
@@ -569,6 +583,17 @@ export function DashboardApp({
     setDeleteTarget({ type: 'company', record: company, applicationCount })
   }
 
+  function openCompanyApplicationsDelete(company) {
+    const applicationCount = envelope.data.applications.filter(
+      (application) => application.companyId === company.id,
+    ).length
+    setDeleteTarget({
+      type: 'companyApplications',
+      record: company,
+      applicationCount,
+    })
+  }
+
   async function confirmDelete(target) {
     if (target.type === 'company') {
       const result = await companyService.delete(target.record.id)
@@ -576,6 +601,11 @@ export function DashboardApp({
         result.deletedApplications
           ? `公司及 ${result.deletedApplications} 条投递已删除`
           : '公司已删除',
+      )
+    } else if (target.type === 'companyApplications') {
+      const result = await applicationService.deleteAllForCompany(target.record.id)
+      await reloadAfterWrite(
+        `已删除“${target.record.companyName}”的 ${result.deletedApplications} 条投递，公司招聘信息已保留`,
       )
     } else {
       await applicationService.delete(target.record.id)
@@ -765,7 +795,15 @@ export function DashboardApp({
               <button className="rt-table-action is-delete" type="button" onClick={() => openCompanyDelete(company)}>
                 删除
               </button>
-            ) : null}
+            ) : (
+              <button
+                className="rt-table-action is-delete"
+                type="button"
+                onClick={() => openCompanyApplicationsDelete(company)}
+              >
+                删除
+              </button>
+            )}
           </>
         )}
         renderCompanyField={(company, field, value) => (

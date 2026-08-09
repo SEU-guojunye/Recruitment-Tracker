@@ -166,6 +166,55 @@ describe('editable extension dashboard', () => {
     expect((await repository.getEnvelope()).sync.localRevision).toBe(5)
   })
 
+  it('deletes every application in a company while retaining the company record', async () => {
+    const user = userEvent.setup()
+    const repository = createRepository()
+    let next = 0
+    const idFactory = () => `batch-delete-${++next}`
+    const company = createCompanyRecord(
+      { id: 'company-batch-delete', companyName: '保留公司' },
+      { idFactory, now: new Date('2026-08-08T10:00:00.000Z') },
+    )
+    const applicationOptions = {
+      idFactory,
+      now: new Date('2026-08-08T10:00:00.000Z'),
+      today: '2026-08-09',
+      companyIds: new Set([company.id]),
+    }
+    await repository.saveCompany(company)
+    await repository.saveApplication(createApplication({
+      id: 'application-batch-delete-1',
+      companyId: company.id,
+      jobTitle: '前端工程师',
+    }, applicationOptions))
+    await repository.saveApplication(createApplication({
+      id: 'application-batch-delete-2',
+      companyId: company.id,
+      jobTitle: '后端工程师',
+    }, applicationOptions))
+
+    render(<DashboardApp repository={repository} />)
+    await screen.findByText('电脑编辑模式')
+    const companyHead = (await screen.findByText('保留公司')).closest('.rt-company-card__head')
+    const deleteButton = within(companyHead).getByRole('button', { name: '删除' })
+    expect(deleteButton).toHaveClass('is-delete')
+    await user.click(deleteButton)
+
+    const dialog = await screen.findByRole('dialog', { name: '删除全部投递' })
+    expect(within(dialog).getByText('确定删除“保留公司”下的全部 2 条投递吗？')).toBeInTheDocument()
+    expect(within(dialog).getByText('公司招聘信息将保留，此操作无法撤销。')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '继续删除' }))
+    await user.type(within(dialog).getByLabelText(/再次确认/u), '保留公司')
+    await user.click(within(dialog).getByRole('button', { name: '确认删除' }))
+
+    expect(await screen.findByText('已删除“保留公司”的 2 条投递，公司招聘信息已保留')).toBeInTheDocument()
+    expect(await repository.getData()).toEqual({ companies: [company], applications: [] })
+    expect((await repository.getEnvelope()).sync.localRevision).toBe(4)
+    expect(document.querySelectorAll('.rt-application-card')).toHaveLength(0)
+    await user.click(screen.getByRole('tab', { name: /招聘信息/u }))
+    expect(screen.getByText('保留公司')).toBeInTheDocument()
+  })
+
   it('shows a repository error and does not close the form on failed save', async () => {
     const user = userEvent.setup()
     const storageArea = new FakeStorageArea()

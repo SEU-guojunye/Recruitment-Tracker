@@ -24,6 +24,7 @@ test('extension dashboard persists local CRUD across page reloads', async ({ pag
     await page.goto(`chrome-extension://${extensionId}/dashboard.html`)
 
     await expect(page.getByText('电脑编辑模式')).toBeVisible()
+    await expect(page.locator('.rt-sync-status')).toHaveCSS('border-radius', '6px')
     await page.getByRole('tab', { name: /招聘信息/u }).click()
     await page.getByRole('button', { name: '新增公司' }).click()
     const companyDialog = page.getByRole('dialog', { name: '保存招聘信息' })
