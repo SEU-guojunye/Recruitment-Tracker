@@ -34,6 +34,10 @@
 - [x] 招聘信息最近更新仅展示日期，操作收敛为“投递 / 编辑 / 删除”；分类字段可点击并聚焦到对应编辑项。
 - [x] 招聘信息支持搜索、优先度、行业三者 AND 组合筛选；只读 Web 仅暴露浏览与筛选控件。
 - [x] 顶部统计卡片使用统一风格的 SVG 线性图标，替换简陋字符图标。
+- [x] 公司图标请求 128 px 源图并保持 34 px 展示尺寸；图标加载后隐藏双字回退，避免透明区域透出文字。
+- [x] 投递详情不再提供额外进度下拉菜单；编辑与删除操作位于投递岗位信息同一行的“操作”列。
+- [x] 公司、投递与招聘列表按字段职责重新分配列宽；所有列表表头及移动端字段标签使用 600 粗体。
+- [x] 原型使用的 Noto Sans SC Variable 已作为本地生产依赖打包，不再依赖 Google Fonts 在线加载。
 
 ## 恢复与工程
 
@@ -63,9 +67,10 @@
 - CloudBase 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - Web Service：`recruitment-tracker`
 - Web URL：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
-- Web Version：`recruitment-tracker-005`
-- Web Build ID：`2601576629`（`SUCCESS`）
+- Web Version：`recruitment-tracker-006`
+- Web Build ID：`2601576951`（`SUCCESS`）
 - 首页与 `/extension-bridge.html` 均返回 HTTP 200，并引用本次构建的新资源哈希。
+- 新 CSS、JS 与 Noto Sans SC WOFF2 字体文件均返回 HTTP 200；生产资源包含粗体表头和 128 px 图标请求。
 - 静态托管首页与错误页均配置为 `index.html`。
 - 已登录线上会话成功读取迁移后的快照；招聘信息页正常显示默认行业、招聘批次和优先度，控制台无错误。
 - `user_snapshots` 的 v1.6 字段迁移和备份信息见 [MIGRATIONS.md](MIGRATIONS.md)。
