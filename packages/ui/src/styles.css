@@ -872,6 +872,29 @@ a {
   color: var(--td-brand-6);
 }
 
+.rt-timeline__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 6px;
+}
+
+.rt-timeline__expand-hint {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid var(--td-brand-6);
+  transition: transform 120ms ease;
+}
+
+.rt-timeline__trigger[aria-expanded="true"] .rt-timeline__expand-hint {
+  transform: rotate(90deg);
+}
+
 .rt-timeline__trigger:focus-visible {
   outline: none;
 }
@@ -894,7 +917,6 @@ a {
 
 .rt-timeline__name {
   min-width: 0;
-  margin-top: 6px;
   padding: 0 3px;
   overflow-wrap: anywhere;
   color: var(--td-text-placeholder);

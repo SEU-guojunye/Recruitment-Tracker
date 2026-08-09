@@ -248,7 +248,10 @@ export function ProgressTimeline({ application, action = null }) {
               <span className="rt-timeline__marker">
                 {stage.state === 'completed' ? <Icon name="check" /> : null}
               </span>
-              <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
+              <span className="rt-timeline__label">
+                <span className="rt-timeline__name" title={stage.name}>{stage.name}</span>
+                <span className="rt-timeline__expand-hint" aria-hidden="true" />
+              </span>
               <span className="rt-sr-only">{stateLabels[stage.state]}</span>
             </button>
           </li>
@@ -266,7 +269,7 @@ export function ProgressTimeline({ application, action = null }) {
             <span>{stateLabels[expandedStage.state]}</span>
           </div>
           <div className="rt-timeline-detail__field">
-            <span>节点日期</span>
+            <span>日期</span>
             <strong>{formatLocalDate(expandedStage.date)}</strong>
           </div>
           <div className="rt-timeline-detail__field rt-timeline-detail__field--note">

@@ -75,7 +75,10 @@ describe('shared readonly dashboard UI', () => {
     expect(interviewTrigger).toHaveAttribute('aria-expanded', 'true')
     const interviewDetail = screen.getByRole('region', { name: '业务面谈节点详情' })
     expect(interviewDetail).toHaveTextContent('2026.08.08')
+    expect(interviewDetail).toHaveTextContent('日期')
+    expect(interviewDetail).not.toHaveTextContent('节点日期')
     expect(interviewDetail).toHaveTextContent('准备案例')
+    expect(document.querySelectorAll('.rt-timeline__expand-hint')).toHaveLength(progressStages.length)
     expect(within(interviewDetail).getByRole('link', {
       name: /https:\/\/meeting\.example\.com\/interview/u,
     })).toMatchObject({
