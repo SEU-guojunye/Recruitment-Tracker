@@ -5,7 +5,7 @@
   - Update core fixtures and tests; preserve parser/Popup boundary changes already in progress.
   - _Requirements: R1, R2, R8_
 
-- [ ] 2. Rebuild the shared TDesign dashboard
+- [x] 2. Rebuild the shared TDesign dashboard
   - Implement the approved navigation, statistics, list tracks, company logo, application metadata, and horizontal Steps.
   - Replace the legacy layered visual theme with one TDesign token system.
   - _Requirements: R3, R4, R5_

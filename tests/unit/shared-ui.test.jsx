@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { DashboardView, PageState, ProgressTimeline } from '@recruitment-tracker/ui'
+import {
+  CompanyLogo,
+  DashboardView,
+  PageState,
+  ProgressTimeline,
+  getCompanyIconUrl,
+} from '@recruitment-tracker/ui'
 import { describe, expect, it, vi } from 'vitest'
 
 const company = {
   id: 'company-a', companyName: '极光科技', normalizedCompanyName: '极光科技',
-  recruitmentLink: 'https://example.com/jobs', companyNotes: '校招',
+  recruitmentLink: 'https://example.com/jobs?from=test', industryType: '互联网',
+  recruitmentBatch: '秋招正式批', priority: 'P0', companyNotes: '兼容备注',
   createdAt: '2026-08-01T00:00:00.000Z', updatedAt: '2026-08-08T00:00:00.000Z',
 }
 const progressStages = [
@@ -15,7 +22,7 @@ const progressStages = [
 ]
 const application = {
   id: 'application-a', companyId: company.id, applicationLink: 'https://example.com/apply',
-  workLocation: '上海', statusLink: '', appliedDate: '2026-08-01', progressStatus: '业务面谈',
+  jobTitle: '前端工程师', workLocation: '上海', statusLink: '', appliedDate: '2026-08-01', progressStatus: '业务面谈',
   progressPhase: 'interview', progressIsTerminal: false, progressUpdatedDate: '2026-08-08',
   isReferral: false, referralCode: '', progressStages, currentStageId: 'interview', applicationNotes: '远程岗位',
   createdAt: '2026-08-01T00:00:00.000Z', updatedAt: '2026-08-08T00:00:00.000Z',
@@ -57,6 +64,22 @@ describe('shared readonly dashboard UI', () => {
     expect(screen.getByText('当前')).toBeInTheDocument()
     expect(screen.getByText('未到达')).toBeInTheDocument()
     expect(screen.getByLabelText('招聘进度：当前为业务面谈')).toBeInTheDocument()
+    expect(screen.getByText('业务面谈').closest('li')).toHaveAttribute('aria-current', 'step')
+  })
+
+  it('derives a hostname-only favicon URL and keeps a two-character fallback', () => {
+    expect(getCompanyIconUrl(company.recruitmentLink))
+      .toBe('https://ico.faviconkit.net/favicon/example.com?sz=64')
+    expect(getCompanyIconUrl('javascript:alert(1)')).toBe('')
+    const { container, rerender } = render(<CompanyLogo company={company} />)
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://ico.faviconkit.net/favicon/example.com?sz=64',
+    )
+    expect(container).toHaveTextContent('极光')
+    rerender(<CompanyLogo company={{ ...company, recruitmentLink: 'invalid' }} />)
+    expect(container.querySelector('img')).not.toBeInTheDocument()
+    expect(container).toHaveTextContent('极光')
   })
 
   it('exposes retryable errors as alerts', async () => {
