@@ -36,6 +36,12 @@ CloudBase user_snapshots（只保留最近一次完整快照）
 
 ![电脑端岗位投递 Dashboard](docs/screenshots/extension-dashboard.png)
 
+### 扩展 Popup：从招聘页面保存公司
+
+打开招聘页面后点击扩展图标，会先显示 Popup。确认公司名称和招聘链接后，点击“保存招聘信息”；Popup 只保存公司，不会自动创建岗位投递。
+
+![扩展 Popup 保存招聘信息](docs/screenshots/extension-popup.png)
+
 ### 编辑公司招聘信息
 
 在“招聘信息”页点击“新增公司”，或者在已有公司行点击“编辑”，会打开下面的表单。行业类型、招聘批次和优先度在这里维护。
