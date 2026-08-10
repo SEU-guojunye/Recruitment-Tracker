@@ -14,6 +14,8 @@ export const CSV_HEADERS = Object.freeze([
   'companyId',
   'companyName',
   'recruitmentLink',
+  'brandDomain',
+  'logoUrl',
   'industryType',
   'recruitmentBatch',
   'priority',
@@ -38,6 +40,10 @@ export const CSV_HEADERS = Object.freeze([
   'applicationCreatedAt',
   'applicationUpdatedAt',
 ])
+
+const LEGACY_CSV_HEADERS = Object.freeze(
+  CSV_HEADERS.filter((header) => !['brandDomain', 'logoUrl'].includes(header)),
+)
 
 const FORMULA_PREFIXES = new Set(['=', '+', '-', '@', '\t', '\r', '\n'])
 
@@ -92,6 +98,8 @@ export function serializeRecruitmentCsv(data) {
       companyId: company.id,
       companyName: company.companyName,
       recruitmentLink: company.recruitmentLink,
+      brandDomain: company.brandDomain || '',
+      logoUrl: company.logoUrl || '',
       industryType: company.industryType,
       recruitmentBatch: company.recruitmentBatch,
       priority: company.priority,
@@ -219,10 +227,11 @@ export function parseRecruitmentCsv(text) {
   }
   const rows = parseCsvRows(text)
   const header = rows.shift()?.values || []
-  if (
-    header.length !== CSV_HEADERS.length ||
-    header.some((value, index) => value !== CSV_HEADERS[index])
-  ) {
+  const headers = [CSV_HEADERS, LEGACY_CSV_HEADERS].find((candidate) => (
+    header.length === candidate.length
+    && header.every((value, index) => value === candidate[index])
+  ))
+  if (!headers) {
     throw new CsvImportError('CSV 表头与当前版本不一致', {
       row: 1,
       code: 'INVALID_CSV_HEADER',
@@ -232,21 +241,17 @@ export function parseRecruitmentCsv(text) {
   return rows
     .filter((row) => row.values.some((value) => value !== ''))
     .map((row) => {
-      if (row.values.length !== CSV_HEADERS.length) {
+      if (row.values.length !== headers.length) {
         throw new CsvImportError(
-          `第 ${row.line} 行列数应为 ${CSV_HEADERS.length}，实际为 ${row.values.length}`,
+          `第 ${row.line} 行列数应为 ${headers.length}，实际为 ${row.values.length}`,
           { row: row.line, code: 'INVALID_COLUMN_COUNT' },
         )
       }
-      return {
-        line: row.line,
-        values: Object.fromEntries(
-          CSV_HEADERS.map((headerName, index) => [
-            headerName,
-            unescapeSpreadsheetText(row.values[index]),
-          ]),
-        ),
-      }
+      const values = Object.fromEntries(CSV_HEADERS.map((headerName) => [headerName, '']))
+      headers.forEach((headerName, index) => {
+        values[headerName] = unescapeSpreadsheetText(row.values[index])
+      })
+      return { line: row.line, values }
     })
 }
 
@@ -462,6 +467,8 @@ export class CsvImportExportService {
           id: targetId,
           companyName: row.values.companyName,
           recruitmentLink: row.values.recruitmentLink,
+          brandDomain: row.values.brandDomain,
+          logoUrl: row.values.logoUrl,
           industryType: row.values.industryType,
           recruitmentBatch: row.values.recruitmentBatch,
           priority: row.values.priority,

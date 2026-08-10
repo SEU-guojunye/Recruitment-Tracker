@@ -162,6 +162,27 @@ describe('CsvImportExportService', () => {
     expect(csv).not.toMatch(/_openid|accessToken|refreshToken|secretId|secretKey/iu)
   })
 
+  it('accepts legacy CSV headers without brand fields', async () => {
+    const repository = createRepository()
+    await seed(repository)
+    const currentRows = parseRecruitmentCsv(await service(repository).exportCsv())
+    const legacyHeaders = CSV_HEADERS.filter((header) => !['brandDomain', 'logoUrl'].includes(header))
+    const quote = (value) => {
+      const text = String(value ?? '')
+      return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+    }
+    const legacyCsv = `\uFEFF${[
+      legacyHeaders.join(','),
+      ...currentRows.map((row) => legacyHeaders.map((header) => quote(row.values[header])).join(',')),
+    ].join('\r\n')}`
+    const parsed = parseRecruitmentCsv(legacyCsv)
+    expect(parsed[0].values.brandDomain).toBe('')
+    expect(parsed[0].values.logoUrl).toBe('')
+    const target = createRepository()
+    const preview = await service(target).previewImport(legacyCsv)
+    expect(preview.canCommit).toBe(true)
+  })
+
   it('round-trips classifications, application notes, custom stages and formulas losslessly', async () => {
     const source = createRepository()
     const expected = await seed(source)

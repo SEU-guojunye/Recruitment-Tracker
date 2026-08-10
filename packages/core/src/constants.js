@@ -69,6 +69,7 @@ export const SYNC_STATUSES = Object.freeze([
 
 export const FIELD_LIMITS = Object.freeze({
   companyName: 120,
+  brandDomain: 253,
   industryType: 80,
   jobTitle: 200,
   url: 2048,

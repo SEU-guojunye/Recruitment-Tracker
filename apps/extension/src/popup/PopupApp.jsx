@@ -43,6 +43,8 @@ export function PopupApp({
   const [values, setValues] = useState({
     companyName: '',
     recruitmentLink: '',
+    brandDomain: '',
+    logoUrl: '',
   })
   const [parsing, setParsing] = useState(true)
   const [parseState, setParseState] = useState('loading')
@@ -64,6 +66,8 @@ export function PopupApp({
         ...current,
         companyName: result.company.companyName,
         recruitmentLink: result.company.recruitmentLink,
+        brandDomain: result.company.brandDomain || '',
+        logoUrl: result.company.logoUrl || '',
       }))
       if (result.status === 'matched') {
         setParseState('success')

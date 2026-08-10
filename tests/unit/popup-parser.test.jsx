@@ -33,7 +33,11 @@ const reliablePage = {
   meta: {},
   jsonLd: [JSON.stringify({
     '@type': 'JobPosting',
-    hiringOrganization: { name: '示例科技' },
+    hiringOrganization: {
+      name: '示例科技',
+      url: 'https://example.com',
+      logo: 'https://example.com/logo.png',
+    },
   })],
   visibleText: '工作地点：上海',
 }
@@ -61,6 +65,8 @@ describe('Popup company-only capture', () => {
     expect(envelope.data.companies).toHaveLength(1)
     expect(envelope.data.companies[0]).toMatchObject({
       companyName: '示例科技',
+      brandDomain: 'example.com',
+      logoUrl: 'https://example.com/logo.png',
       companyNotes: '',
       industryType: '',
       recruitmentBatch: '秋招正式批',

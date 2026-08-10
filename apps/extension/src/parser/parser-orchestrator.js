@@ -1,5 +1,10 @@
 import { FIELD_LIMITS, isHttpUrl } from '@recruitment-tracker/core'
-import { collectSiteAdapterCandidates } from './site-adapters.js'
+import {
+  cleanBrandDomain,
+  cleanLogoUrl,
+  collectSiteAdapterCandidates,
+  isRecruitmentPlatformHostname,
+} from './site-adapters.js'
 
 const GENERIC_SITE_NAMES = new Set([
   'boss直聘',
@@ -10,6 +15,10 @@ const GENERIC_SITE_NAMES = new Set([
   '智联招聘',
   '前程无忧',
   '51job',
+  'moka',
+  'moka hr',
+  '飞书',
+  '飞书招聘',
   '招聘',
   '职位',
   'jobs',
@@ -37,6 +46,29 @@ function cleanUrl(value) {
   return cleaned.length <= FIELD_LIMITS.url && isHttpUrl(cleaned) ? cleaned : ''
 }
 
+function logoValue(value) {
+  if (Array.isArray(value)) return value.map(logoValue).find(Boolean) || ''
+  if (typeof value === 'string') return cleanLogoUrl(value)
+  if (value && typeof value === 'object') return cleanLogoUrl(value.url)
+  return ''
+}
+
+function brandFields(object) {
+  const sameAs = Array.isArray(object?.sameAs) ? object.sameAs : [object?.sameAs]
+  const brandDomain = [
+    object?.url,
+    ...sameAs,
+  ].map(cleanBrandDomain).find(Boolean) || ''
+  const logoUrl = [
+    logoValue(object?.logo),
+    logoValue(object?.image),
+  ].find(Boolean) || ''
+  return {
+    ...(brandDomain ? { brandDomain } : {}),
+    ...(logoUrl ? { logoUrl } : {}),
+  }
+}
+
 function walkJson(value, visit, depth = 0) {
   if (depth > 8 || value === null || value === undefined) return
   if (Array.isArray(value)) {
@@ -58,11 +90,23 @@ function jsonLdCandidates(raw) {
         const type = Array.isArray(object['@type']) ? object['@type'] : [object['@type']]
         const hiringName = cleanCompanyName(object.hiringOrganization?.name)
         if (hiringName) {
-          candidates.push({ name: hiringName, confidence: 0.98, source: 'jsonld:hiringOrganization' })
+          candidates.push({
+            name: hiringName,
+            confidence: 0.98,
+            source: 'jsonld:hiringOrganization',
+            ...brandFields(object.hiringOrganization),
+          })
         }
         if (type.some((item) => ['Organization', 'Corporation'].includes(item))) {
           const name = cleanCompanyName(object.name)
-          if (name) candidates.push({ name, confidence: 0.86, source: 'jsonld:organization' })
+          if (name) {
+            candidates.push({
+              name,
+              confidence: 0.86,
+              source: 'jsonld:organization',
+              ...brandFields(object),
+            })
+          }
         }
       })
     } catch {
@@ -84,15 +128,45 @@ function metaCandidates(raw) {
   })
 }
 
+const TITLE_DECORATION_PREFIX = /^(?:\u6b22\u8fce\s*)?(?:\u52a0\u5165\u6211\u4eec|\u6b22\u8fce\u52a0\u5165|welcome(?:\s+to)?|join\s+us(?:\s+at)?)\s*/iu
+const TITLE_DECORATION_SUFFIX = /(?:\u6821\u56ed\u62db\u8058|\u6821\u62db|\u62db\u8058\u5b98\u65b9\u7f51\u7ad9|\u62db\u8058\u5b98\u7f51|\u62db\u8058|campus\s+recruitment|campus\s+careers?|campus|careers?|recruiting)\s*$/iu
+
+function cleanTitleCandidate(value) {
+  if (typeof value !== 'string') return ''
+  return cleanCompanyName(value
+    .replace(TITLE_DECORATION_PREFIX, '')
+    .replace(TITLE_DECORATION_SUFFIX, ''))
+}
+
 function titleCandidates(raw) {
   if (typeof raw.title !== 'string') return []
   return raw.title
     .normalize('NFKC')
     .split(/[|｜–—_-]/u)
-    .map(cleanCompanyName)
+    .map(cleanTitleCandidate)
     .filter(Boolean)
     .slice(0, 5)
     .map((name) => ({ name, confidence: 0.45, source: 'title' }))
+}
+
+function pageBrandFields(raw) {
+  let brandDomain = ''
+  try {
+    const url = new URL(raw.url)
+    if (['http:', 'https:'].includes(url.protocol) && !isRecruitmentPlatformHostname(url.hostname)) {
+      brandDomain = cleanBrandDomain(url.hostname)
+    }
+  } catch {
+    // Invalid URLs are handled by cleanUrl; no generic brand fallback is produced.
+  }
+
+  const images = Array.isArray(raw?.brandSignals?.images) ? raw.brandSignals.images : []
+  const logoUrl = images
+    .filter((item) => /logo|brand|company/iu.test(`${item?.src || ''} ${item?.alt || ''} ${item?.className || ''}`))
+    .map((item) => cleanLogoUrl(item?.src))
+    .find(Boolean) || ''
+
+  return { brandDomain, logoUrl }
 }
 
 export class ParserOrchestrator {
@@ -106,7 +180,7 @@ export class ParserOrchestrator {
     if (!raw || typeof raw !== 'object') {
       return {
         status: 'unavailable',
-        company: { companyName: '', recruitmentLink: '' },
+        company: { companyName: '', recruitmentLink: '', brandDomain: '', logoUrl: '' },
         alternatives: [],
         parsedAt,
       }
@@ -115,7 +189,7 @@ export class ParserOrchestrator {
     const merged = [
       ...jsonLdCandidates(raw),
       ...metaCandidates(raw),
-      ...collectSiteAdapterCandidates(raw.url).flatMap((candidate) => {
+      ...collectSiteAdapterCandidates(raw.url, raw).flatMap((candidate) => {
         const name = cleanCompanyName(candidate.name)
         return name ? [{ ...candidate, name }] : []
       }),
@@ -125,14 +199,37 @@ export class ParserOrchestrator {
     for (const candidate of merged) {
       const key = candidate.name.toLowerCase()
       const existing = byName.get(key)
-      if (!existing || candidate.confidence > existing.confidence) {
+      if (!existing) {
         byName.set(key, candidate)
+      } else if (candidate.confidence > existing.confidence) {
+        byName.set(key, {
+          ...candidate,
+          brandDomain: candidate.brandDomain || existing.brandDomain,
+          logoUrl: candidate.logoUrl || existing.logoUrl,
+        })
+      } else {
+        byName.set(key, {
+          ...existing,
+          brandDomain: existing.brandDomain || candidate.brandDomain,
+          logoUrl: existing.logoUrl || candidate.logoUrl,
+        })
       }
     }
     const alternatives = [...byName.values()]
       .sort((left, right) => right.confidence - left.confidence || left.name.localeCompare(right.name, 'zh-CN'))
       .slice(0, 5)
     const best = alternatives[0]
+    const pageBrand = pageBrandFields(raw)
+    const candidateBrand = alternatives.reduce((result, candidate) => ({
+      brandDomain: result.brandDomain || candidate.brandDomain || '',
+      logoUrl: result.logoUrl || candidate.logoUrl || '',
+    }), { brandDomain: '', logoUrl: '' })
+    const brand = best
+      ? {
+          brandDomain: candidateBrand.brandDomain || pageBrand.brandDomain,
+          logoUrl: candidateBrand.logoUrl || pageBrand.logoUrl,
+        }
+      : { brandDomain: '', logoUrl: '' }
     return {
       status: best?.confidence >= this.reliableThreshold
         ? 'matched'
@@ -142,6 +239,7 @@ export class ParserOrchestrator {
       company: {
         companyName: best?.name || '',
         recruitmentLink,
+        ...brand,
       },
       alternatives,
       parsedAt,

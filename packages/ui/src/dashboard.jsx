@@ -118,7 +118,7 @@ export function PageState({ type, title, description, actionLabel = '重试', on
 }
 
 export function CompanyLogo({ company }) {
-  const iconUrls = getCompanyIconUrls(company.recruitmentLink)
+  const iconUrls = getCompanyIconUrls(company)
   const sourceKey = iconUrls.join('|')
   const [sourceState, setSourceState] = useState({ key: '', index: 0, loaded: false })
   const sourceIndex = sourceState.key === sourceKey ? sourceState.index : 0

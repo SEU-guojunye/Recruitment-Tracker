@@ -6,7 +6,11 @@ import {
   RECRUITMENT_BATCHES,
 } from './constants.js'
 import { isIsoUtcTimestamp, isLocalDate, toLocalDate } from './dates.js'
-import { isHttpUrl, normalizeCompanyName } from './normalization.js'
+import {
+  isCompanyBrandDomain,
+  isHttpUrl,
+  normalizeCompanyName,
+} from './normalization.js'
 import { deriveProgressSummary } from './progress.js'
 
 export class DomainValidationError extends Error {
@@ -81,6 +85,15 @@ export function validateCompanyRecord(company) {
     )
   }
   validateUrl(errors, company.recruitmentLink, 'recruitmentLink')
+  if (company.brandDomain !== undefined) {
+    validateText(errors, company.brandDomain, 'brandDomain', { max: FIELD_LIMITS.brandDomain })
+    if (typeof company.brandDomain === 'string' && !isCompanyBrandDomain(company.brandDomain)) {
+      addError(errors, 'brandDomain', 'invalid_brand_domain', 'brandDomain 必须是公司官方网站 hostname，且不能是招聘平台域名')
+    }
+  }
+  if (company.logoUrl !== undefined) {
+    validateUrl(errors, company.logoUrl, 'logoUrl')
+  }
   validateText(errors, company.industryType, 'industryType', {
     max: FIELD_LIMITS.industryType,
   })

@@ -55,8 +55,8 @@ npm run test:e2e
 
 - 环境：`recuriment-tracker-d4cx9a1dc6d69`（`ap-shanghai`）
 - 应用：`recruitment-tracker`
-- 版本：`recruitment-tracker-008`
-- Build ID：`2601570762`
+- 版本：`recruitment-tracker-011`
+- Build ID：`2601580514`
 - 地址：`https://recruitment-tracker-recuriment-tracker-d4cx9a1dc6d69.webapps.tcloudbase.com/`
 - 状态：`SUCCESS`（2026-08-10 发布）
 

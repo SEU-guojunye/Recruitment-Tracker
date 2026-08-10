@@ -70,6 +70,21 @@ describe('core model normalization and creation', () => {
     })
   })
 
+  it('keeps optional brand fields while rejecting recruitment platform domains', () => {
+    const company = makeCompany({
+      brandDomain: 'www.example.com',
+      logoUrl: 'https://cdn.example.com/logo.png',
+    })
+    expect(company).toMatchObject({
+      brandDomain: 'www.example.com',
+      logoUrl: 'https://cdn.example.com/logo.png',
+    })
+    expect(() => makeCompany({ brandDomain: 'app.mokahr.com' }))
+      .toThrow(DomainValidationError)
+    expect(() => makeCompany({ brandDomain: 'momenta.jobs.feishu.cn' }))
+      .toThrow(DomainValidationError)
+  })
+
   it('validates closed company classifications and accepts custom industries', () => {
     expect(makeCompany({ industryType: '新能源', priority: 'P0' })).toMatchObject({
       industryType: '新能源',

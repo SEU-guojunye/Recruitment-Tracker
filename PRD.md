@@ -1,8 +1,8 @@
 # Recruitment Tracker 产品需求文档（PRD）
 
-> 版本：v1.6
+> 版本：v1.7 需求增补稿
 >
-> 状态：v1.6 数据模型、TDesign Dashboard、扩展编辑端与只读 Web 已完成验收并部署到 CloudBase
+> 状态：v1.6 数据模型、TDesign Dashboard、扩展编辑端与只读 Web 已完成验收并部署到 CloudBase；v1.7 公司品牌身份解析优化已实现
 >
 > 开发语言：JavaScript ES2022+ / JSX
 >
@@ -81,6 +81,7 @@ CloudSnapshot ── identifies ── sourceDeviceId + sourceRevision
 
 - 公司名称。
 - 公司招聘链接。
+- 公司品牌域名和公司图标地址等最小派生品牌信息。
 - 行业类型。
 - 招聘批次。
 - 优先度。
@@ -92,12 +93,16 @@ CloudSnapshot ── identifies ── sourceDeviceId + sourceRevision
 
 - `companyName` 必填，去除首尾空白后长度为 1～120 个字符。
 - `recruitmentLink` 可为空，最多 2048 个字符；解析器默认使用当前页面的 HTTP/HTTPS URL，用户可以修改或清空。
+- `brandDomain` 可为空，只保存公司的官方网站 hostname，不保存协议、路径、查询参数或招聘平台 hostname；最大长度为 253 个字符。
+- `logoUrl` 可为空，只允许 HTTP/HTTPS URL，最多 2048 个字符；优先保存招聘页面直接暴露的公司 Logo 地址，不允许 `data:`、`javascript:` 或内联 SVG 内容。
 - `industryType` 由用户维护，可从“互联网、制造业、央国企、快消、银行、游戏、军工”中选择；后续允许用户新增自定义选项，解析器不得推断。
 - `recruitmentBatch` 由用户维护，只接受“秋招正式批”“秋招提前批”“春招正式批”，新建公司默认“秋招正式批”，解析器不得推断。
 - `priority` 由用户维护，只接受 `P0`、`P1`、`P2`，新建公司默认 `P1`，解析器不得推断。
 - `companyNotes` 自 v1.6 起不再作为产品字段；历史存储中的同名字段只作兼容保留，Popup、Dashboard 和解析器均不展示、不采集、不更新。
 - `normalizedCompanyName` 使用 Unicode NFKC、去除首尾空白、合并连续空白并统一拉丁字母大小写；不自动删除“集团”“科技”“有限公司”等后缀，也不猜测简称或别名。
 - 公司名称规范化只用于候选匹配，不进行无提示的自动合并。
+- `brandDomain` 和 `logoUrl` 是可重新解析的派生品牌字段，不作为公司唯一主键，也不触发公司自动合并。
+- `identityConfidence`、`logoConfidence`、平台租户标识和解析来源只属于解析器内部或临时解析结果，不写入 `CompanyRecord`。
 
 ### 3.2 `Application`
 
@@ -158,7 +163,9 @@ MVP 将序列化后的本地数据和云端快照都限制在 8 MiB 以内。导
   status: "matched",
   company: {
     companyName: "示例公司",
-    recruitmentLink: "https://example.com/careers"
+    recruitmentLink: "https://example.com/careers",
+    brandDomain: "example.com",
+    logoUrl: "https://example.com/assets/logo.png"
   },
   alternatives: [],
   parsedAt: "2026-08-09T09:30:00.000Z"
@@ -170,6 +177,7 @@ MVP 将序列化后的本地数据和云端快照都限制在 8 MiB 以内。导
 - 读取当前页面 URL、标题、Meta、JSON-LD 和可见文本。
 - 识别公司名称。
 - 将当前页面链接作为公司招聘链接候选值。
+- 识别公司的官方网站 hostname 和页面直接暴露的公司 Logo 地址，并作为可选品牌字段返回。
 - 为每次解析生成 ISO 8601 UTC 格式的 `parsedAt`；即使解析失败也必须返回该字段。
 - 创建或更新 `CompanyRecord`。
 - 提示用户确认或修改识别结果。
@@ -179,6 +187,8 @@ MVP 将序列化后的本地数据和云端快照都限制在 8 MiB 以内。导
 - 解析输入视为不可信数据；公司名称、Meta、JSON-LD 和可见文本必须执行长度限制和纯文本处理。
 - 招聘链接和投递链接只允许 `http:` 或 `https:`，禁止 `javascript:`、`data:` 等协议。
 - 解析结果为空、置信度不足或页面不可访问时，Popup 必须允许用户手动填写，不得伪造识别成功。
+- `brandDomain` 和 `logoUrl` 识别失败时不影响公司名称和招聘链接保存；Dashboard 必须降级显示公司首字。
+- `identityConfidence`、`logoConfidence`、平台 ID、租户标识和候选来源只在解析器内部使用，不进入 `CompanyRecord`。
 - Content Script 只负责采集页面候选信息并返回消息，不直接读写业务 Repository。
 
 解析器禁止：
@@ -205,6 +215,73 @@ MVP 将序列化后的本地数据和云端快照都限制在 8 MiB 以内。导
 11. Popup 提供“打开 Dashboard”入口，不要求用户通过扩展管理页寻找 Dashboard。
 
 CloudBase 同步失败不得阻止本地保存成功。
+
+### 4.3 公司品牌身份解析
+
+招聘链接和公司品牌身份必须分开处理：
+
+```text
+recruitmentLink → 用户投递入口
+brandDomain     → 公司官方网站 hostname
+logoUrl         → 公司 Logo 直接地址
+```
+
+解析器不得默认使用招聘链接的 hostname 作为公司 Logo 域名。以下域名属于招聘平台，不能直接作为公司品牌域名：
+
+```text
+app.mokahr.com
+jobs.feishu.cn
+jobs.lever.co
+boards.greenhouse.io
+job-boards.greenhouse.io
+```
+
+公司名称候选仍使用现有 JSON-LD、Meta、站点适配器和标题回退机制；品牌字段使用独立的来源优先级：
+
+- 通用公司官网页面会过滤“加入我们”“欢迎加入”“招聘”“校园招聘”“校招”“招聘官网”“招聘官方网站”“Campus”“Campus Careers”“Recruiting”等栏目装饰词，再参与标题候选排序；
+- 当前页面 hostname 不是已知招聘平台域名时，去除 `www.` 后作为低优先级 `brandDomain` 候选，例如 `https://www.cxmt.com/join.html` 推断为 `cxmt.com`；Moka、Feishu、智联等平台 hostname 不得作为公司官网域名；
+
+1. `hiringOrganization.logo`、`Organization.logo` 等 JSON-LD 公司 Logo。
+2. 招聘平台页面配置中明确标记为公司 Logo 的地址。
+3. 页面中的公司官网链接、`Organization.url` 或 `sameAs`，提取为 `brandDomain`。
+4. `brandDomain` 对应的 FaviconKit、Tomba 或 Brandfetch 图标服务。
+5. 无有效品牌字段时显示公司名称首字，不显示招聘平台图标。
+
+名称置信度和 Logo 置信度分别在解析器内部计算。名称置信度用于决定 `matched`、`needsConfirmation` 和 `unavailable`；Logo 不参与公司保存状态，也不单独阻断保存。
+
+#### Moka 适配器
+
+支持 `app.mokahr.com/campus-recruitment/{tenant}/{siteId}` 结构：
+
+- 从 pathname 提取 `tenant`，例如 `hypergryph`、`kpmg`；在页面没有明确官网域名时，自动尝试 `${tenant}.com`、`${tenant}.cn` 作为低优先级品牌域名候选。
+- 优先读取页面标题、Meta、JSON-LD 和 Moka 页面配置中的 `displayName`、公司 Logo 地址及公司官网链接。
+- 页面标题中的“加入我们”“校园招聘”“招聘官网”等招聘栏目装饰词由通用标题规则清除；平台适配器可以在此基础上补充平台专用装饰词。
+- 首批别名包括 `hypergryph → 鹰角网络`、`kpmg → 毕马威`，仅作为公司名称兜底，不参与品牌域名拼接规则；特殊规则维护在 `packages/core/src/special-brand-rules.js`。
+- Moka 的 `public-cdn.mokahr.com` Logo 地址可以作为 `logoUrl` 保存，但 `app.mokahr.com` 不得作为 `brandDomain`。
+
+#### Feishu 适配器
+
+支持 `https://{tenant}.jobs.feishu.cn/campus/` 结构：
+
+- 从 hostname 提取 `{tenant}`，例如 `momenta.jobs.feishu.cn → momenta`。
+- `project`、`current`、`limit` 等查询参数只作为页面或项目上下文，不参与公司名称和 Logo 域名判断。
+- 优先读取页面标题、Meta、JSON-LD、页面 DOM 或内嵌配置中的公司名称、公司 Logo 和公司官网；标题中的“校招”“校园招聘”“Campus”“Welcome to”等平台装饰词自动清除。
+- 对 hostname 提取的 `tenant` 自动尝试 `${tenant}.com`、`${tenant}.cn` 作为公司品牌域名候选，例如 `nio.jobs.feishu.cn → nio.com/nio.cn`、`bambulab.jobs.feishu.cn → bambulab.com/bambulab.cn`；页面明确提供的官网域名优先于通用推断。平台和租户相关的特殊品牌规则可覆盖通用推断，例如 `feishu.momenta → momenta.ai`、`moka.alibaba → alibaba.cn`。
+- 首批别名包括 `nio → NIO`、`bambulab → Bambu Lab`、`momenta → Momenta`，仅在页面身份信号缺失时作为名称兜底；特殊品牌规则维护在 `packages/core/src/special-brand-rules.js`。
+- `*.jobs.feishu.cn` 始终视为招聘平台域名，不得用于公司图标服务；没有 `logoUrl` 或可用 `brandDomain` 时显示公司首字。
+
+站点适配器统一使用以下职责边界：
+
+```js
+{
+  id,
+  matches(url),
+  extractIdentity(raw),
+  extractBrandAssets(raw),
+}
+```
+
+适配器可以新增候选和品牌字段，但不得创建投递记录、访问 Repository 或调用外部搜索服务。
 
 ## 5. 产品运行模式与页面信息架构
 
@@ -293,7 +370,9 @@ CloudBase 同步失败不得阻止本地保存成功。
 
 公司图标规则：
 
-- 从合法的公司招聘链接提取 hostname，依次尝试 FaviconKit 128px API、Tomba Logo API 和 Brandfetch 图标 API；当前外部 API 来源失败后自动切换下一来源。Brandfetch 仅在配置公开的 `VITE_BRANDFETCH_CLIENT_ID` 时启用，未配置时安全跳过。
+- 优先使用 `CompanyRecord.logoUrl`；加载失败后使用 `CompanyRecord.brandDomain` 和招聘平台租户推断出的品牌域名候选，按特殊规则、`.com`、`.cn` 顺序依次尝试 FaviconKit 128px API、Tomba Logo API 和 Brandfetch 图标 API。Brandfetch 仅在配置公开的 `VITE_BRANDFETCH_CLIENT_ID` 时启用，未配置时安全跳过。
+- 历史记录没有 `logoUrl` 或 `brandDomain` 时，只有在招聘链接 hostname 不属于已知招聘平台时，才允许将招聘链接 hostname 作为兼容性回退域名。
+- `app.mokahr.com`、`*.jobs.feishu.cn`、`jobs.lever.co`、Greenhouse 域名及其他已登记招聘平台域名不得发送给外部公司图标 API。
 - 域名必须先校验并进行 URL 编码，不向任何外部图标 API 发送完整招聘路径或查询参数。
 - 任一来源加载成功时立即显示该图标；全部来源均请求失败、返回无效图片或图片解析失败时，才降级为浅主题色填充的 6px 圆角矩形，使用主题色以 18px 粗体显示公司名称首字。
 - Favicon 仅作辅助识别，公司名称始终保留为可读文本；图片使用空 `alt`，避免屏幕阅读器重复播报公司名。
@@ -497,6 +576,8 @@ Popup 只展示：
 - 公司名称。
 - 公司招聘链接。
 
+解析器可以随结果带回 `brandDomain` 和 `logoUrl`，但 Popup 不展示置信度、平台租户、解析来源或品牌字段编辑控件；保存时仅将两个可选品牌字段写入 `CompanyRecord`。
+
 Popup 不展示公司备注、行业类型、招聘批次、优先度、投递日期、工作地点、投递链接、招聘进度、状态页链接、内推信息和投递备注。行业类型、招聘批次与优先度在 Dashboard 中由用户维护。
 
 ### F-002 公司管理
@@ -562,6 +643,8 @@ CSV 使用单文件混合记录格式，表头固定为：
 | `companyId` | 全部 | 导出时必填；公司稳定业务 ID，也是投递关联公司的外键；外部导入时允许留空 |
 | `companyName` | 全部 | 必填；投递行重复保存以便阅读和名称回退匹配 |
 | `recruitmentLink` | `company` | 公司招聘链接，可为空 |
+| `brandDomain` | `company` | 公司官方网站 hostname，可为空；不得为招聘平台 hostname |
+| `logoUrl` | `company` | 公司 Logo HTTP/HTTPS 地址，可为空；不保存内联图片内容 |
 | `industryType` | `company` | 行业类型，可使用预置选项或用户自定义选项 |
 | `recruitmentBatch` | `company` | 招聘批次，只接受“秋招正式批”“秋招提前批”“春招正式批” |
 | `priority` | `company` | 优先度，只接受 `P0`、`P1`、`P2` |
@@ -662,6 +745,8 @@ CSV 使用单文件混合记录格式，表头固定为：
   companyName: "示例公司",
   normalizedCompanyName: "示例公司",
   recruitmentLink: "https://example.com/careers",
+  brandDomain: "example.com",
+  logoUrl: "https://example.com/assets/logo.png",
   industryType: "互联网",
   recruitmentBatch: "秋招正式批",
   priority: "P0",
@@ -705,6 +790,8 @@ CSV 使用单文件混合记录格式，表头固定为：
 进度字段规则：
 
 - `CompanyRecord.id` 和 `Application.id` 在本地数据集中必须唯一且创建后不可变；每个 `Application.companyId` 必须指向已有公司。
+- `CompanyRecord.brandDomain` 和 `CompanyRecord.logoUrl` 均为可选派生字段；缺失、失效或清空时不影响公司记录和投递记录。
+- `brandDomain` 只允许官方网站 hostname，已知招聘平台 hostname 必须拒绝；`logoUrl` 只允许 HTTP/HTTPS URL，禁止内联图片和脚本协议。
 - `CompanyRecord.industryType` 由用户维护；预置选项不是封闭枚举，后续允许新增自定义值。
 - `CompanyRecord.recruitmentBatch` 必须是“秋招正式批”“秋招提前批”“春招正式批”之一。
 - `CompanyRecord.priority` 必须是 `P0`、`P1`、`P2` 之一。
@@ -721,6 +808,8 @@ CSV 使用单文件混合记录格式，表头固定为：
 - `workLocation` 最多 200 个字符，`referralCode` 最多 200 个字符，`applicationNotes` 最多 5000 个字符。
 - `appliedDate` 不得晚于用户本地当天；`isReferral=false` 时保存前清空 `referralCode`。
 - 每条投递至少保留 1 个、最多保存 30 个进度环节；环节名称去除首尾空白后长度为 1～80 个字符。
+
+v1.7 的 `brandDomain` 和 `logoUrl` 是向后兼容的可选字段。已有 v1 公司记录缺少这两个字段时按空值处理，不要求为历史记录批量访问招聘页面，不新增 `identityConfidence`、`logoConfidence` 或平台诊断字段，也不因这两个字段单独触发公司合并。
 
 ### 10.3 `CloudSnapshot`
 
@@ -1016,7 +1105,7 @@ Recruitment-Tracker/
 
 ### 13.2 采集、公司与投递管理
 
-- 当用户点击扩展图标时，解析器只返回公司名称、招聘链接候选和 `parsedAt`，不返回公司备注且不创建投递。
+- 当用户点击扩展图标时，解析器返回公司名称、招聘链接候选、可选 `brandDomain`、可选 `logoUrl` 和 `parsedAt`，不返回置信度字段到 `CompanyRecord`，不创建投递。
 - 解析失败时用户可以在 Popup 手动填写并保存公司。
 - Popup 不显示公司备注输入框。
 - 用户可以新增、编辑和删除公司，也可以新增、编辑和删除具体投递。
@@ -1024,7 +1113,9 @@ Recruitment-Tracker/
 - 同一家公司在“岗位投递”中只显示一行。
 - 招聘信息列表顶部在搜索框右侧提供优先度和行业两个下拉筛选控件；三项条件可组合筛选，移动端搜索框独占一行、两个筛选器等宽并排。
 - 招聘信息列表展示公司图标、公司名称、行业类型、招聘批次、优先度、独立的招聘链接列、投递岗位数和最近更新，不展示公司备注或最近进度列；行业类型、招聘批次和优先度均使用与正文列一致的可编辑普通文字，招聘链接使用主题蓝；桌面端各语义列等宽，公司列左对齐且其余列内容锚点居中，移动端所有字段左对齐。
-- FaviconKit、Tomba 和 Brandfetch 外部 API 均加载失败时显示浅主题色圆角矩形和公司名称首字，不显示破损图片。
+- 对 Moka 的 `app.mokahr.com/campus-recruitment/{tenant}/{siteId}` 链接，自动从 `tenant` 推断 `${tenant}.com`、`${tenant}.cn` 作为低优先级品牌域名候选，并将 `hypergryph`、`kpmg` 识别为“鹰角网络”、“毕马威”；对 Feishu 的 `{tenant}.jobs.feishu.cn/campus/` 链接同样尝试 `.com` 和 `.cn`，特殊规则将 `momenta` 的品牌域名覆盖为 `momenta.ai`，并将 `nio`、`bambulab`、`momenta` 分别识别为“NIO”、“Bambu Lab”、“Momenta”。
+- Moka、Feishu、Lever 和 Greenhouse 的平台 hostname 不会被发送给公司 Logo 外部 API；平台页面没有公司 Logo 或官网域名时显示公司名称首字。
+- `logoUrl`、`brandDomain` 和历史招聘链接兼容回退按固定优先级加载；FaviconKit、Tomba 和 Brandfetch 外部 API 均加载失败时显示浅主题色圆角矩形和公司名称首字，不显示破损图片。
 - 岗位投递列表顶部搜索框直接替代“岗位投递进度”标题；公司摘要独立展示投递链接、已投递岗位和投递岗位数，不展示最近进度列。
 - 岗位投递页的投递范围和招聘阶段两个筛选器位于搜索框右侧；移动端搜索框独占一行、两个筛选器等宽并排。
 - 展开公司后能看到多条独立申请记录；每条记录完整展示投递岗位名称、岗位链接、岗位工作地点、投递日期、最新更新日期，以及紧邻招聘进度标题文字右侧的编辑进度控件；字段网格不单独展示当前进度。
@@ -1068,6 +1159,7 @@ Recruitment-Tracker/
 - 同一公司的多条投递重新导入后仍是多条独立子记录，并在 Dashboard 中按公司聚合。
 - 导入器能够识别已有业务 ID；已有 ID 更新对应记录，缺少 ID 时创建新记录。
 - CSV 中的日期、布尔值和 `progressStages` JSON 不合法时显示具体错误行，且不产生部分写入。
+- 导入器兼容 v1.7 之前没有 `brandDomain`、`logoUrl` 两列的旧 CSV；旧文件导入时两个字段按空值处理，新导出使用包含两个字段的新表头。
 - CSV 中出现重复或冲突业务 ID 时停止导入并显示错误行。
 - 公式注入防护在表格中不执行不可信文本，重新导入本产品 CSV 后原始文本保持一致。
 - 导入后预计数据超过 8 MiB 时不得写入本地数据。
@@ -1108,6 +1200,8 @@ Recruitment-Tracker/
 ### 13.8 工程与容量基线
 
 - `npm run lint`、`npm test`、`npm run build` 和 `npm run test:e2e` 均有实际依赖和配置，不是空脚本。
+- 解析器单元测试覆盖普通公司页面、Moka `hypergryph`/`kpmg`、Feishu `nio`/`bambulab`/`momenta` 的租户域名推断与标题清洗、平台 hostname 禁止作为品牌域名、页面 Logo 优先、品牌字段缺失时首字回退和历史记录兼容。
+- UI 单元测试覆盖 `logoUrl → brandDomain → 非平台招聘域名兼容回退 → 首字` 的图标加载顺序，以及平台域名不会请求外部公司 Logo API。
 - 本地序列化数据达到容量预警值时页面显示占用提示，预计超过 8 MiB 的写入被阻止且原数据保持不变。
 - `chrome.storage.local` 只向扩展受信上下文开放，Content Script 不能直接读取完整求职数据。
 - 在扩展重载、浏览器重启、离线后恢复和登录 Session 过期场景完成回归测试。
@@ -1117,6 +1211,9 @@ Recruitment-Tracker/
 | 风险 | 影响 | 应对 |
 |---|---|---|
 | 公司简称或别名 | 同一公司被拆分 | 规范化匹配、候选提示、用户确认 |
+| 招聘平台租户名不等于公司官网 | Moka、Feishu 等平台 hostname 被误当成公司域名或 Logo | 站点适配器提取租户但不直接当作品牌域名；维护平台 hostname 黑名单；页面未提供品牌字段时使用首字回退 |
+| 平台页面结构或内嵌配置变化 | 公司名称或 Logo 解析失败 | 保留 JSON-LD、Meta、标题和别名回退；解析失败不阻断手动填写和公司保存 |
+| Logo CDN 地址失效 | 已保存公司图标无法加载 | `logoUrl` 失败后尝试 `brandDomain` 服务，全部失败时显示公司首字；不影响业务数据 |
 | 同公司多个岗位未填写职位名称 | 子项区分困难 | 支持用户在投递编辑表单中维护岗位名称；为空时仍使用投递 ID、链接、地点、日期和备注区分 |
 | 自定义环节名称过长 | 时间线排版拥挤 | 环节文字允许换行；窄屏切换纵向布局 |
 | 页面窗口较窄 | 组件重叠或被截断 | React 组件采用响应式布局并执行多宽度视觉测试 |
@@ -1166,7 +1263,7 @@ Recruitment-Tracker/
 5. 从原型提取设计变量和响应式 CSS，在 `packages/ui` 先实现只读共享组件、页面状态和可访问性；使用固定数据验证桌面横向时间线和手机纵向时间线。
 6. 在扩展 Dashboard 接入本地 Repository，完成标签、统计、搜索、筛选、公司聚合、公司 CRUD、投递 CRUD 和删除确认，形成完整本地业务闭环。
 7. 实现快速进度切换和进度编辑器，包括阶段分类、终态、增删改序、日期、删除当前环节规则和派生字段一致性测试。
-8. 实现独立 Popup、Content Script、Extension Service Worker、`ParserOrchestrator`、站点适配器和通用回退解析器；验证解析器只保存公司信息。
+8. 实现独立 Popup、Content Script、Extension Service Worker、`ParserOrchestrator`、站点适配器和通用回退解析器；增加 Moka 与 Feishu 适配器，分离招聘链接和公司品牌身份，保存最小可选 `brandDomain`、`logoUrl` 字段；验证解析器只保存公司信息，不持久化置信度和平台诊断字段。
 9. 实现完整 CSV 导入导出、重复 ID 检测、公式注入防护、导入预览、容量预检、原子提交和无损往返测试。
 10. 将 PoC 接入正式 `AuthService`、`CloudBaseSnapshotReader`、`CloudBaseSnapshotWriter` 和 `SyncCoordinator`，实现持久 dirty 修订号、`chrome.alarms`、单任务串行、失败重试、手动同步、账号/设备冲突、显式设备接管和最后同步状态。
 11. 复用共享组件实现手机只读 Web Dashboard，完成真实 Session 守卫、快照结构校验、无快照、网络错误、版本不兼容和四档手机宽度测试。
@@ -1182,7 +1279,8 @@ Recruitment-Tracker/
 
 - 公司是列表聚合主键。
 - 投递是公司下的独立子记录。
-- 解析器只维护公司招聘信息。
+- 解析器只维护公司招聘信息，并可额外保存最小的 `brandDomain`、`logoUrl` 派生字段。
+- 招聘链接与公司品牌身份分离；Moka、Feishu 等平台租户标识只在解析器内部参与识别，不作为公司域名。
 - 进度时间线属于具体投递。
 - 自定义环节名称用于展示，稳定阶段和终态用于统计与筛选。
 - 当前进度不作为独立字段展示，由招聘进度 Steps 的节点、文字和 `aria-current="step"` 共同表达。

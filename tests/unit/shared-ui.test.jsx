@@ -138,6 +138,36 @@ describe('shared readonly dashboard UI', () => {
     expect(successful.container.querySelector('.rt-company-logo')).toHaveClass('is-loaded')
   })
 
+  it('uses the stored brand identity before rejecting recruitment platform domains', () => {
+    const companyWithBrand = {
+      ...company,
+      recruitmentLink: 'https://app.mokahr.com/campus-recruitment/hypergryph/26326',
+      brandDomain: 'hypergryph.com',
+      logoUrl: 'https://public-cdn.mokahr.com/hypergryph/logo.png',
+    }
+    expect(getCompanyIconUrls(companyWithBrand)).toEqual([
+      'https://public-cdn.mokahr.com/hypergryph/logo.png',
+      'https://ico.faviconkit.net/favicon/hypergryph.com?sz=128',
+      'https://logo.tomba.io/hypergryph.com',
+      'https://ico.faviconkit.net/favicon/hypergryph.cn?sz=128',
+      'https://logo.tomba.io/hypergryph.cn',
+    ])
+    expect(getCompanyIconUrls('https://app.mokahr.com/campus-recruitment/hypergryph/26326')).toEqual([
+      'https://ico.faviconkit.net/favicon/hypergryph.com?sz=128',
+      'https://logo.tomba.io/hypergryph.com',
+      'https://ico.faviconkit.net/favicon/hypergryph.cn?sz=128',
+      'https://logo.tomba.io/hypergryph.cn',
+    ])
+    expect(getCompanyIconUrls('https://momenta.jobs.feishu.cn/campus/?project=1')).toEqual([
+      'https://ico.faviconkit.net/favicon/momenta.ai?sz=128',
+      'https://logo.tomba.io/momenta.ai',
+      'https://ico.faviconkit.net/favicon/momenta.com?sz=128',
+      'https://logo.tomba.io/momenta.com',
+      'https://ico.faviconkit.net/favicon/momenta.cn?sz=128',
+      'https://logo.tomba.io/momenta.cn',
+    ])
+  })
+
   it('exposes retryable errors as alerts', async () => {
     const retry = vi.fn()
     const user = userEvent.setup()

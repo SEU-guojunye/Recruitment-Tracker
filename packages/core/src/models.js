@@ -37,6 +37,8 @@ export function createCompanyRecord(
     companyName,
     normalizedCompanyName: normalizeCompanyName(companyName),
     recruitmentLink: normalizeOptionalUrl(input.recruitmentLink),
+    brandDomain: typeof input.brandDomain === 'string' ? input.brandDomain.trim() : '',
+    logoUrl: normalizeOptionalUrl(input.logoUrl),
     industryType: typeof input.industryType === 'string'
       ? input.industryType.trim()
       : '',
